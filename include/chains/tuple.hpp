@@ -1,6 +1,8 @@
 #ifndef CHAIN_TUPLE_HPP
 #define CHAIN_TUPLE_HPP
 
+#include <chains/config.hpp>
+
 #include <cstddef>     // std::size_t
 #include <functional>  // std::invoke
 #include <tuple>       // std::tuple, std::get, std::apply, std::tuple_size_v
@@ -8,7 +10,9 @@
 #include <utility>     // std::forward, std::move, std::index_sequence, std::make_index_sequence
 #include <variant>     // std::monostate
 
-namespace chains::inline v0 {
+namespace chains {
+
+inline namespace CHAINS_VERSION_NAMESPACE() {
 
 namespace detail {
 
@@ -168,7 +172,8 @@ constexpr auto tuple_compose_greedy(std::tuple<Fs...>&& sequence) {
 
 //--------------------------------------------------------------------------------------------------
 
-} // namespace chains::inline v0
+} // namespace CHAINS_VERSION_NAMESPACE()
+} // namespace chains
 
 //--------------------------------------------------------------------------------------------------
 
