@@ -3,6 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <stlab/test/model.hpp> // moveonly
 
+#include <cstddef>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -15,23 +16,21 @@ TEST_CASE("Test tuple compose", "[tuple]") {
 }
 
 struct multi_callable {
-    int operator()(int a, float b) const { return a + static_cast<int>(b); }
-    int operator()(int a, float b, int c) const { return a + static_cast<int>(b) + c; }
+    auto operator()(int a, float b) const -> int { return a + static_cast<int>(b); }
+    auto operator()(int a, float b, int c) const -> int { return a + static_cast<int>(b) + c; }
 };
 
 struct void_t {};
 
-auto oneInt2Int = [](int a) { return a; };
+auto oneInt2Int = [](int a) -> int { return a; };
 // auto twoInt2Int = [](int a, int b) { return a + b; };
 // auto void2Int = []() { return 42; };
-auto string2Int = [](const std::string& s) { return s.size(); };
-auto oneInt2String = [](int a) { return std::to_string(a); };
-auto moveonly2Int = [](stlab::move_only m) { return m.member(); };
-auto oneInt2Moveonly = [](int a) { return stlab::move_only(a); };
+auto string2Int = [](const std::string& s) -> std::size_t { return s.size(); };
+auto oneInt2String = [](int a) -> std::string { return std::to_string(a); };
+auto moveonly2Int = [](stlab::move_only m) -> int { return m.member(); };
+auto oneInt2Moveonly = [](int a) -> stlab::move_only { return {a}; };
 
 TEST_CASE("Test tuple consume", "[tuple]") {
-    using namespace std::string_literals;
-
     GIVEN("A tuple with a single value") {
         WHEN("an int value is passed into a function that returns an int") {
             std::tuple t{42};
@@ -43,11 +42,13 @@ TEST_CASE("Test tuple consume", "[tuple]") {
         WHEN("an int value is passed into a function that returns a string") {
             std::tuple t{42};
             THEN("this value is returned") {
+                using namespace std::string_literals;
                 auto result = chains::tuple_consume(t)(oneInt2String);
                 REQUIRE(result == std::make_tuple("42"s));
             }
         }
         WHEN("a string value is passed into a function that returns an int") {
+            using namespace std::string_literals;
             std::tuple t{"42"s};
             THEN("this value is returned") {
                 auto result = chains::tuple_consume(t)(string2Int);

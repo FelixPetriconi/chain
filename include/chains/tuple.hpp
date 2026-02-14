@@ -10,9 +10,7 @@
 #include <utility>     // std::forward, std::move, std::index_sequence, std::make_index_sequence
 #include <variant>     // std::monostate
 
-namespace chains {
-
-inline namespace CHAINS_VERSION_NAMESPACE() {
+namespace chains::inline CHAINS_VERSION_NAMESPACE() {
 
 namespace detail {
 
@@ -172,8 +170,7 @@ constexpr auto tuple_compose_greedy(std::tuple<Fs...>&& sequence) {
 
 //--------------------------------------------------------------------------------------------------
 
-} // namespace CHAINS_VERSION_NAMESPACE()
-} // namespace chains
+} // namespace chains::inline CHAINS_VERSION_NAMESPACE()
 
 //--------------------------------------------------------------------------------------------------
 
