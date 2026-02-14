@@ -21,7 +21,7 @@ struct multi_callable {
 
 struct void_t {};
 
-auto oneInt2Int = [](int a) { return a * 2; };
+auto oneInt2Int = [](int a) { return a; };
 // auto twoInt2Int = [](int a, int b) { return a + b; };
 // auto void2Int = []() { return 42; };
 auto string2Int = [](const std::string& s) { return s.size(); };

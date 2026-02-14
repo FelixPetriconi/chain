@@ -30,9 +30,9 @@ jobs:
       # and your own projects needs
       matrix:
         os:
-          - ubuntu-20.04
-          - macos-10.15
-          - windows-2019
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
         compiler:
           # you can specify the version after `-` like "llvm-15.0.2".
           - llvm-19.1.1
@@ -69,7 +69,7 @@ jobs:
 
           # Set up preferred package generators, for given build configurations
           - build_type: Release
-            packaging_maintainer_mode: OFF
+            packaging_maintainer_mode: On
             package_generator: TBZ2
 
           # This exists solely to make sure a non-multiconfig build works
