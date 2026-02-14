@@ -42,14 +42,12 @@ TEST_CASE("Test tuple consume", "[tuple]") {
         WHEN("an int value is passed into a function that returns a string") {
             std::tuple t{42};
             THEN("this value is returned") {
-                using namespace std::string_literals;
                 auto result = chains::tuple_consume(t)(oneInt2String);
-                REQUIRE(result == std::make_tuple("42"s));
+                REQUIRE(result == std::make_tuple(std::string("42")));
             }
         }
         WHEN("a string value is passed into a function that returns an int") {
-            using namespace std::string_literals;
-            std::tuple t{"42"s};
+            std::tuple t{std::string("42")};
             THEN("this value is returned") {
                 auto result = chains::tuple_consume(t)(string2Int);
                 REQUIRE(result == std::make_tuple(2));
