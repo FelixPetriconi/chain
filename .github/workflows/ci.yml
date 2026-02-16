@@ -183,9 +183,7 @@ jobs:
       - name: Windows - Test and coverage
         if: runner.os == 'Windows'
         working-directory: ./build
-        shell: powershell
         run: |
-          Get-ChildItem -Recurse -Filter *.dll | Select-Object FullName
           OpenCppCoverage.exe --export_type cobertura:coverage.xml --cover_children -- ctest -C ${{matrix.build_type}}
 
       - name: Publish Tagged Release
