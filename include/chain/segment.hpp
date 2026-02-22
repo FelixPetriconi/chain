@@ -26,8 +26,8 @@ class segment {
 
 public:
     /*
-        An apply operation may inject additional arguments into the segment. The plan is that the
-        receiver will get sent to apply and this is how cancellation tokens can be injected into an
+        The invole operation may inject additional arguments into the segment. The plan is that the
+        receiver will get sent to invoke and this is how cancellation tokens can be injected into an
         operation. Something like `with_cancellation`.
 
         This feature is also used for the `then` operation where the resolve future is injected into
@@ -44,10 +44,6 @@ public:
     explicit segment(type<Injects>, Applicator&& apply, Fs&&... functions)
         : _functions{std::move(functions)...}, _apply{std::move(apply)} {}
 
-    /*
-        The basic operations should follow those from C++ lambdas, for now default everything.
-        and see if the compiler gets it correct.
-    */
     segment(const segment&) = default;
     segment(segment&&) noexcept = default;
     auto operator=(const segment&) -> segment& = default;
@@ -61,7 +57,7 @@ public:
     }
 
     /*
-        The apply function for a segment always returns void.
+        The invoke function for a segment always returns void.
 
         Invoke will check the receiver for cancellation -
         If not canceled, apply(segment), cancellation is checked before execution of the segment
