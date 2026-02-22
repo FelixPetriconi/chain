@@ -13,8 +13,7 @@ Copyright 2026 Adobe
 #include <type_traits>
 #include <utility>
 
-namespace chain {
-inline namespace CHAIN_VERSION_NAMESPACE() {
+namespace chain::inline CHAIN_VERSION_NAMESPACE() {
 
 /*
     The `then` algorithm takes a future and returns a segment (chain) that will schedule the
@@ -33,17 +32,17 @@ inline namespace CHAIN_VERSION_NAMESPACE() {
 
 template <class F>
 auto then(F&& future) {
-    return chain{std::tuple<>{},
-                 segment{type<typename std::decay_t<F>::result_type>{},
-                         [_future = std::forward<F>(future)]<typename C>(C&& continuation) mutable {
-                             return std::move(_future).then(std::forward<C>(continuation));
-                         }}};
+    return chain{
+        std::tuple<>{},
+        segment{type<typename std::decay_t<F>::result_type>{},
+                [_future = std::forward<F>(future)]<typename C>(C&& continuation) mutable -> auto {
+                    return std::move(_future).then(std::forward<C>(continuation));
+                }}};
 }
 
 // TODO: (sean-parent) - should we make this pipeable?
 // TODO: (sean-parent) - fix case where invoke_t is void.
 
-} // namespace CHAIN_VERSION_NAMESPACE()
-} // namespace chain
+} // namespace chain::inline CHAIN_VERSION_NAMESPACE()
 
 #endif

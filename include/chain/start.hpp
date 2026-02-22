@@ -1,5 +1,5 @@
 /*
-Copyright 2026 Adobe
+    Copyright 2026 Adobe
   Distributed under the Boost Software License, Version 1.0.
   (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
@@ -12,8 +12,7 @@ Copyright 2026 Adobe
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/future.hpp>
 
-namespace chain {
-inline namespace CHAIN_VERSION_NAMESPACE() {
+namespace chain::inline CHAIN_VERSION_NAMESPACE() {
 
 template <class Chain, class... Args>
 inline auto start(Chain&& chain, Args&&... args) {
@@ -51,7 +50,6 @@ inline auto start(Chain&& chain, Args&&... args) {
     }
 }
 
-} // namespace CHAIN_VERSION_NAMESPACE()
-} // namespace chain
+} // namespace chain::inline CHAIN_VERSION_NAMESPACE()
 
 #endif

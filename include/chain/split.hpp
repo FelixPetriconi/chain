@@ -1,7 +1,7 @@
 /*
-Copyright 2026 Adobe
-  Distributed under the Boost Software License, Version 1.0.
-  (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+    Copyright 2026 Adobe
+    Distributed under the Boost Software License, Version 1.0.
+    (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
 #ifndef CHAIN_SPLIT_HPP
@@ -17,8 +17,7 @@ Copyright 2026 Adobe
 #include <optional>
 #include <type_traits>
 
-namespace chain {
-inline namespace CHAIN_VERSION_NAMESPACE() {
+namespace chain::inline CHAIN_VERSION_NAMESPACE() {
 
 template <class T>
     requires std::is_copy_constructible_v<T>
@@ -39,8 +38,9 @@ struct split_state {
             _completed.store(true, std::memory_order_release);
         }
         auto continuations = extract_continuations();
-        for (auto& c : continuations)
+        for (auto& c : continuations) {
             c(*_value);
+        }
         _cv.notify_all();
     }
 
@@ -92,8 +92,8 @@ private:
 
         auto branch_segment = segment{
             type<void>{},
-            [this]<typename Composed, typename... StartArgs>(Composed&& composed,
-                                                             StartArgs&&... start_args) mutable {
+            [this]<typename Composed, typename... StartArgs>(
+                Composed&& composed, StartArgs&&... start_args) mutable -> auto {
                 using result_t = typename upstream_t::template result_type<StartArgs...>;
 
                 // Allocate shared state only once (first branch start)
@@ -103,13 +103,13 @@ private:
                 auto state = std::static_pointer_cast<split_state<result_t>>(_state);
 
                 // Register this branch's continuation
-                state->add_continuation(
-                    [comp = std::forward<Composed>(composed)](const result_t& v) mutable noexcept {
-                        try {
-                            comp(v);
-                        } catch (...) { /* optional: log */
-                        }
-                    });
+                state->add_continuation([comp = std::forward<Composed>(composed)](
+                                            const result_t& v) mutable noexcept -> void {
+                    try {
+                        comp(v);
+                    } catch (...) { /* optional: log */
+                    }
+                });
 
                 // Start upstream only once
                 if (!state->_started.exchange(true, std::memory_order_acq_rel)) {
@@ -117,7 +117,7 @@ private:
                         std::shared_ptr<split_state<result_t>> _s;
                         void operator()(result_t&& val) { _s->set_value(std::move(val)); }
                         void set_exception(std::exception_ptr p) { _s->set_exception(p); }
-                        bool canceled() const { return false; }
+                        [[nodiscard]] auto canceled() const -> bool { return false; }
                     };
                     auto receiver = std::make_shared<upstream_receiver>();
                     receiver->_s = state;
@@ -132,17 +132,17 @@ private:
 
 public:
     template <class F>
-    auto fan(F&& f) & {
+    [[nodiscard]] auto fan(F&& f) & -> auto {
         return make_branch(std::forward<F>(f));
     }
     template <class F>
-    auto fan(F&& f) && {
+    [[nodiscard]] auto fan(F&& f) && -> auto {
         return make_branch(std::forward<F>(f));
     }
 };
 
 template <class Chain>
-auto split(Chain&& c) {
+[[nodiscard]] auto split(Chain&& c) -> auto {
     return split_holder<Chain>{std::forward<Chain>(c)};
 }
 
@@ -203,23 +203,22 @@ private:
 
 public:
     template <class F>
-    auto fan(F&& f) & {
+    [[nodiscard]] auto fan(F&& f) & -> auto {
         return make_branch(std::forward<F>(f));
     }
     template <class F>
-    auto fan(F&& f) && {
+    [[nodiscard]] auto fan(F&& f) && -> auto {
         return make_branch(std::forward<F>(f));
     }
 };
 
 // Helper to build a bound split holder
 template <class Chain, class... Args>
-auto split_bind(Chain&& c, Args&&... args) {
+[[nodiscard]] auto split_bind(Chain&& c, Args&&... args) -> auto {
     return split_holder_bound<std::decay_t<Chain>, std::decay_t<Args>...>{
         std::forward<Chain>(c), std::forward<Args>(args)...};
 }
 
-} // namespace CHAIN_VERSION_NAMESPACE()
-} // namespace chain
+} // namespace chain::inline CHAIN_VERSION_NAMESPACE()
 
 #endif

@@ -176,7 +176,6 @@ TEST_CASE("Test tuple consume", "[tuple]") {
     SECTION("A tuple with a single value is passed to tuple_consume") {
         SECTION("tuple<int> -> int(int)") {
             std::tuple t{42};
-
             auto result = chain::tuple_consume(t)(oneInt2Int{});
             CHECK(result == std::make_tuple(42));
         }

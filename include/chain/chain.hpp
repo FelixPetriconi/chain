@@ -15,8 +15,6 @@
 #include <tuple>
 #include <utility>
 
-#define STLAB_FWD(x) std::forward<decltype(x)>(x)
-
 /*
 
 If exception inside a segment _apply_ function throws an exception then the exception must be
@@ -26,30 +24,16 @@ set on the receiver.
 
 namespace chain::inline CHAIN_VERSION_NAMESPACE() {
 
-/*
-segment is invoked with a receiver -
-*/
-
-template <class Receiver>
-struct receiver_ref {
-    Receiver* _receiver;
-    auto operator()(auto&&... args) -> void {
-        _receiver->operator()(std::forward<decltype(args)>(args)...);
-    }
-    auto set_exception(std::exception_ptr p) -> void { _receiver->set_exception(p); }
-    [[nodiscard]] auto canceled() const -> bool { return _receiver->canceled(); }
-};
-
 namespace detail {
 
 /// Apply a recursive lambda to each element in the tuple-like Segments.
 template <class Fold, class Segments>
 constexpr auto fold_over(Fold fold, Segments&& segments) {
     return std::apply(
-        [fold]<typename... Links>(Links&&... links) mutable {
+        [fold]<typename... Links>(Links&&... links) mutable -> auto {
             return fold(fold, std::forward<Links>(links)...);
         },
-        STLAB_FWD(segments));
+        std::forward<decltype(segments)>(segments));
 }
 
 } // namespace detail
@@ -93,6 +77,7 @@ class chain {
             [_receiver =
                  std::forward<R>(receiver)]<typename Fold, typename First, typename... Rest>(
                 [[maybe_unused]] Fold fold, First&& first, Rest&&... rest) mutable -> auto {
+                if (_receiver.canceled()) return;
                 if constexpr (sizeof...(rest) == 0) {
                     return [_receiver, _segment = std::forward<First>(first).append(
                                            [_receiver]<typename V>(V&& val) {
