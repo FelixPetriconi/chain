@@ -1,12 +1,12 @@
 target_sources( chain INTERFACE
         FILE_SET headers
         TYPE HEADERS
-        BASE_DIRS ../
+        BASE_DIRS ../../
         FILES
 
         chain.hpp
         chain_config.hpp
-        #on.hpp
+        on.hpp
         segment.hpp
         #split.hpp
         #start.hpp

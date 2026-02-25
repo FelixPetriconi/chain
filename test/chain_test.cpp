@@ -1,7 +1,11 @@
-#include <stlab/chain.hpp>
-#include <stlab/segment.hpp>
+#include <stlab/chain/chain.hpp>
+#include <stlab/chain/on.hpp>
+#include <stlab/chain/segment.hpp>
+#include <stlab/chain/start.hpp>
 
 #include <catch2/catch_test_macros.hpp>
+
+#include <stlab/concurrency/immediate_executor.hpp>
 
 #include <utility>
 
@@ -9,17 +13,13 @@ TEST_CASE("Basic chain operations", "[chain]") {
     SECTION("Can instantiate a simple chain") {
         SECTION("Chain with two lambdas") {
             // Create a simple chain by piping a segment with a function
-            auto s = stlab::segment{stlab::type<void>{},
-                                    []<typename... Args>(auto&& f, Args&&... args) -> auto {
-                                        return f(std::forward<Args>(args)...);
-                                    },
-                                    [](int x) -> int { return x * 2; }};
+            auto sut = stlab::on(stlab::immediate_executor) | [](int x) -> int {
+                return x * 2;
+            } | stlab::on(stlab::immediate_executor) | [](int x) -> int { return x + 10; };
 
-            auto c = std::move(s) | [](int x) -> int { return x + 1; };
-
-            // c is now a stlab::chain instance
-            // We can verify it compiles and the type is deduced correctly
-            (void)c; // Suppress unused variable warning
+            auto result = stlab::start(std::move(sut), 5);
+            REQUIRE(result.is_ready());
+            CHECK(*result.get_ready() == 20); // (5 * 2) + 10 = 20
         }
     }
 }

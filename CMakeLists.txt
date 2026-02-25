@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.29)
 
 # Disable modules support, this is broken with clang-tidy at the moment
-cmake_policy(SET CMP0155 OLD) 
+cmake_policy(SET CMP0155 OLD)
 
 # This template attempts to be "fetch_content"-able
 # so that it works well with tools like CPM or other
@@ -81,7 +81,7 @@ if (WIN32)
 endif()
 
 
-add_subdirectory(include/chain)
+add_subdirectory(include/stlab/chain)
 # Adding the src:
 add_subdirectory(src)
 

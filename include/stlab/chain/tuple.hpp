@@ -7,7 +7,7 @@
 #ifndef STLAB_CHAIN_TUPLE_HPP
 #define STLAB_CHAIN_TUPLE_HPP
 
-#include <stlab/chain_config.hpp>
+#include <stlab/chain/chain_config.hpp>
 
 #include <cstddef>     // std::size_t
 #include <functional>  // std::invoke

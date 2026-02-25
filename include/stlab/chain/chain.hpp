@@ -7,9 +7,9 @@
 #ifndef STLAB_CHAIN_HPP
 #define STLAB_CHAIN_HPP
 
-#include <stlab/chain_config.hpp>
-#include <stlab/segment.hpp>
-#include <stlab/tuple.hpp>
+#include <stlab/chain/chain_config.hpp>
+#include <stlab/chain/segment.hpp>
+#include <stlab/chain/tuple.hpp>
 
 #include <exception>
 #include <tuple>

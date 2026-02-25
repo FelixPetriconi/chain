@@ -4,18 +4,17 @@
     (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
-#ifndef CHAIN_ON_HPP
-#define CHAIN_ON_HPP
-
-#include <chain/config.hpp>
-#include <chain/segment.hpp>
+#ifndef STLAB_CHAIN_ON_HPP
+#define STLAB_CHAIN_ON_HPP
 
 #include <atomic>
 #include <memory>
+#include <stlab/chain/chain_config.hpp>
+#include <stlab/chain/segment.hpp>
 #include <tuple>
 #include <utility>
 
-namespace chain::inline CHAIN_VERSION_NAMESPACE() {
+namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE() {
 
 /*
 
@@ -54,7 +53,7 @@ struct cancellation_token {
 
 // Segment that injects a cancellation_token (Injects != void)
 inline auto with_cancellation(cancellation_source src) {
-    return segment{chain::type<cancellation_token>{},
+    return segment{stlab::type<cancellation_token>{},
                    [_src = std::move(src)]<typename F, typename... Args>(
                        F&& f, Args&&... args) mutable -> auto {
                        // Create token and forward it as first argument
@@ -66,7 +65,7 @@ inline auto with_cancellation(cancellation_source src) {
 // executor variant that also injects the token and schedules asynchronously
 template <class E>
 auto on_with_cancellation(E&& executor, cancellation_source source) {
-    return segment{chain::type<cancellation_token>{},
+    return segment{stlab::type<cancellation_token>{},
                    [_executor = std::forward<E>(executor),
                     _source = std::move(source)]<typename F, typename... Args>(
                        F&& f, Args&&... args) mutable -> auto {
@@ -82,6 +81,6 @@ auto on_with_cancellation(E&& executor, cancellation_source source) {
                        });
                    }};
 }
-} // namespace chain::inline CHAIN_VERSION_NAMESPACE()
+} // namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE()
 
 #endif

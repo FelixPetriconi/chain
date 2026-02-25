@@ -1,18 +1,18 @@
 /*
     Copyright 2026 Adobe
-  Distributed under the Boost Software License, Version 1.0.
-  (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+    Distributed under the Boost Software License, Version 1.0.
+    (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
-#ifndef CHAIN_START_HPP
-#define CHAIN_START_HPP
+#ifndef STLAB_CHAIN_START_HPP
+#define STLAB_CHAIN_START_HPP
 
-#include <chain/config.hpp>
+#include <stlab/chain/chain_config.hpp>
 
 #include <stlab/concurrency/await.hpp>
 #include <stlab/concurrency/future.hpp>
 
-namespace chain::inline CHAIN_VERSION_NAMESPACE() {
+namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE() {
 
 template <class Chain, class... Args>
 inline auto start(Chain&& chain, Args&&... args) {
@@ -50,6 +50,6 @@ inline auto start(Chain&& chain, Args&&... args) {
     }
 }
 
-} // namespace chain::inline CHAIN_VERSION_NAMESPACE()
+} // namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE()
 
 #endif
