@@ -1,5 +1,5 @@
-#include <chain/chain.hpp>
-#include <chain/segment.hpp>
+#include <stlab/chain.hpp>
+#include <stlab/segment.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -9,7 +9,7 @@ TEST_CASE("Basic chain operations", "[chain]") {
     SECTION("Can instantiate a simple chain") {
         SECTION("Chain with two lambdas") {
             // Create a simple chain by piping a segment with a function
-            auto s = chain::segment{chain::type<void>{},
+            auto s = stlab::segment{stlab::type<void>{},
                                     []<typename... Args>(auto&& f, Args&&... args) -> auto {
                                         return f(std::forward<Args>(args)...);
                                     },
@@ -17,7 +17,7 @@ TEST_CASE("Basic chain operations", "[chain]") {
 
             auto c = std::move(s) | [](int x) -> int { return x + 1; };
 
-            // c is now a chain::chain instance
+            // c is now a stlab::chain instance
             // We can verify it compiles and the type is deduced correctly
             (void)c; // Suppress unused variable warning
         }

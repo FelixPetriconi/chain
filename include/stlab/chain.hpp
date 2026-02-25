@@ -4,12 +4,12 @@
     (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
-#ifndef CHAIN_CHAIN_HPP
-#define CHAIN_CHAIN_HPP
+#ifndef STLAB_CHAIN_HPP
+#define STLAB_CHAIN_HPP
 
-#include <chain/config.hpp>
-#include <chain/segment.hpp>
-#include <chain/tuple.hpp>
+#include <stlab/chain_config.hpp>
+#include <stlab/segment.hpp>
+#include <stlab/tuple.hpp>
 
 #include <exception>
 #include <tuple>
@@ -22,7 +22,7 @@ set on the receiver.
 
 */
 
-namespace chain::inline CHAIN_VERSION_NAMESPACE() {
+namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE() {
 
 namespace detail {
 
@@ -167,6 +167,6 @@ auto operator|(segment<Injects, Applicator, Fs...>&& head, F&& f) {
     return chain{std::tuple<>{}, std::move(head).append(std::forward<F>(f))};
 }
 
-} // namespace chain::inline CHAIN_VERSION_NAMESPACE()
+} // namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE()
 
 #endif

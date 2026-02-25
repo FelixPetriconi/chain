@@ -5,7 +5,7 @@ target_sources( chain INTERFACE
         FILES
 
         chain.hpp
-        config.hpp
+        chain_config.hpp
         #on.hpp
         segment.hpp
         #split.hpp
