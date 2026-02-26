@@ -7,7 +7,7 @@
 #ifndef STLAB_CHAIN_TUPLE_HPP
 #define STLAB_CHAIN_TUPLE_HPP
 
-#include <stlab/chain/chain_config.hpp>
+#include <stlab/chain/config.hpp>
 
 #include <cstddef>     // std::size_t
 #include <functional>  // std::invoke
@@ -83,7 +83,7 @@ constexpr auto invoke_prefix(F&& f, Tuple&& t) {
             return std::monostate{};
         }
     } else {
-        return [&]<std::size_t... Is>(std::index_sequence<Is...>) -> auto {
+        return [&]<std::size_t... Is>(std::index_sequence<Is...>) {
             if constexpr (std::is_void_v<decltype(std::invoke(f, std::move(std::get<Is>(t))...))>) {
                 std::invoke(f, std::move(std::get<Is>(t))...);
                 return std::monostate{};

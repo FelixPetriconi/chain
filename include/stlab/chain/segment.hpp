@@ -7,7 +7,7 @@
 #ifndef STLAB_CHAIN_SEGMENT_HPP
 #define STLAB_CHAIN_SEGMENT_HPP
 
-#include <stlab/chain/chain_config.hpp>
+#include <stlab/chain/config.hpp>
 #include <stlab/chain/tuple.hpp>
 
 #include <exception>
@@ -26,8 +26,8 @@ class segment {
 
 public:
     /*
-        The invole operation may inject additional arguments into the segment. The plan is that the
-        receiver will get sent to invoke and this is how cancellation tokens can be injected into an
+        An apply operation may inject additional arguments into the segment. The plan is that the
+        receiver will get sent to apply and this is how cancellation tokens can be injected into an
         operation. Something like `with_cancellation`.
 
         This feature is also used for the `then` operation where the resolve future is injected into
@@ -35,15 +35,18 @@ public:
     */
     template <class... Args>
     auto result_type_helper(Args&&... args) && {
-        return stlab::interpret(std::move(_functions))(std::forward<Args>(args)...);
+        return interpret(std::move(_functions))(std::forward<Args>(args)...);
     }
 
     explicit segment(type<Injects>, Applicator&& apply, std::tuple<Fs...>&& functions)
         : _functions{std::move(functions)}, _apply{std::move(apply)} {}
-
     explicit segment(type<Injects>, Applicator&& apply, Fs&&... functions)
         : _functions{std::move(functions)...}, _apply{std::move(apply)} {}
 
+    /*
+        The basic operations should follow those from C++ lambdas, for now default everything.
+        and see if the compiler gets it correct.
+    */
     segment(const segment&) = default;
     segment(segment&&) noexcept = default;
     auto operator=(const segment&) -> segment& = default;
@@ -53,11 +56,11 @@ public:
     auto append(F&& f) && {
         return stlab::segment{
             type<Injects>{}, std::move(_apply),
-            std::tuple_cat(std::move(_functions), std::tuple{std::forward<F>(f)})};
+            std::tuple_cat(std::move(_functions), std::make_tuple(std::forward<F>(f)))};
     }
 
     /*
-        The invoke function for a segment always returns void.
+        The apply function for a segment always returns void.
 
         Invoke will check the receiver for cancellation -
         If not canceled, apply(segment), cancellation is checked before execution of the segment
@@ -69,7 +72,7 @@ public:
         // TODO: must handle this cancel prior to invoking the segment.
         // if (receiver.canceled()) return;
         return std::move(_apply)(
-            [_f = stlab::interpret(std::move(_functions)),
+            [_f = interpret(std::move(_functions)),
              _receiver = std::forward<R>(receiver)]<typename... T>(T&&... args) mutable noexcept {
                 if (_receiver->canceled()) return;
                 try {

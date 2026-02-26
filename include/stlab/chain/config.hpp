@@ -8,6 +8,6 @@
 #define STLAB_CHAIN_CONFIG_HPP
 
 // Release version macro - used for inline namespace increment on each release
-#define STLAB_CHAIN_VERSION_NAMESPACE() chain_v0_0_1
+#define STLAB_CHAIN_VERSION_NAMESPACE() v0_0_1
 
 #endif

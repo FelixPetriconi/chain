@@ -7,14 +7,18 @@
 #ifndef STLAB_CHAIN_HPP
 #define STLAB_CHAIN_HPP
 
-#include <stlab/chain/chain_config.hpp>
+#include <stlab/chain/config.hpp>
 #include <stlab/chain/segment.hpp>
 #include <stlab/chain/tuple.hpp>
+
+#include <stlab/concurrency/future.hpp>
+#include <stlab/concurrency/immediate_executor.hpp>
 
 #include <exception>
 #include <tuple>
 #include <utility>
 
+#define STLAB_FWD(x) std::forward<decltype(x)>(x)
 /*
 
 If exception inside a segment _apply_ function throws an exception then the exception must be
@@ -30,7 +34,7 @@ namespace detail {
 template <class Fold, class Segments>
 constexpr auto fold_over(Fold fold, Segments&& segments) {
     return std::apply(
-        [fold]<typename... Links>(Links&&... links) mutable -> auto {
+        [fold]<typename... Links>(Links&&... links) mutable {
             return fold(fold, std::forward<Links>(links)...);
         },
         std::forward<decltype(segments)>(segments));
@@ -77,7 +81,6 @@ class chain {
             [_receiver =
                  std::forward<R>(receiver)]<typename Fold, typename First, typename... Rest>(
                 [[maybe_unused]] Fold fold, First&& first, Rest&&... rest) mutable -> auto {
-                if (_receiver.canceled()) return;
                 if constexpr (sizeof...(rest) == 0) {
                     return [_receiver, _segment = std::forward<First>(first).append(
                                            [_receiver]<typename V>(V&& val) {
@@ -132,13 +135,15 @@ public:
     // append function to the last sequence
     template <class F>
     auto append(F&& f) && {
-        return chain{std::move(_tail), std::move(_head).append(std::forward<F>(f))};
+        // the namespace specifier is needed, otherwise the compiler fails.
+        return stlab::chain{std::move(_tail), std::move(_head).append(std::forward<F>(f))};
     }
 
     template <class Jnjects, class I, class... Gs>
     auto append(segment<Jnjects, I, Gs...>&& head) && {
-        return chain{std::tuple_cat(std::move(_tail), std::tuple{std::move(_head)}),
-                     std::move(head)};
+        // the namespace specifier is needed, otherwise the compiler fails.
+        return stlab::chain{std::tuple_cat(std::move(_tail), std::make_tuple(std::move(_head))),
+                            std::move(head)};
     }
 
     template <class Receiver, class... Args>
@@ -165,6 +170,56 @@ chain(Tail&& tail, segment<Injects, Applicator, Fs...>&& head)
 template <class F, class Injects, class Applicator, class... Fs>
 auto operator|(segment<Injects, Applicator, Fs...>&& head, F&& f) {
     return chain{std::tuple<>{}, std::move(head).append(std::forward<F>(f))};
+}
+
+/*
+
+Each segment invokes the next segment with result and returns void. Promise is bound to the
+last item in the chain as a segment.
+
+*/
+template <class E>
+auto on(E&& executor) {
+    return segment{type<void>{},
+                   [_executor = std::forward<E>(executor)]<typename F, typename... Args>(
+                       F&& f, Args&&... args) mutable {
+                       std::move(_executor)(
+                           [_f = std::forward<F>(f),
+                            _args = std::tuple{std::forward<Args>(args)...}]() mutable noexcept {
+                               std::apply(std::move(_f), std::move(_args));
+                           });
+                       // return std::monostate{};
+                   }};
+}
+
+template <class Chain, class... Args>
+auto start(Chain&& chain, Args&&... args) {
+    using result_t = typename Chain::template result_type<Args...>;
+
+    using package_task_t = stlab::packaged_task<result_t>;
+    auto shared = std::shared_ptr<package_task_t>();
+
+    // Build the receiver and future first.
+    auto [receiver, future] = stlab::package<result_t(result_t)>(
+        stlab::immediate_executor,
+        [_shared = shared]<typename T>(T&& val) { return std::forward<T>(val); });
+
+    // Promote receiver to shared_ptr to extend lifetime beyond this scope.
+    shared = std::make_shared<package_task_t>(std::move(receiver));
+
+    // Recompute invoke_t based on passing the shared_ptr (pointer semantics).
+    using invoke_t =
+        decltype(std::forward<Chain>(chain).invoke(shared, std::forward<Args>(args)...));
+
+    if constexpr (std::is_void_v<invoke_t>) {
+        // Just invoke; lifetime of receiver is now owned by captures inside the async chain.
+        std::forward<Chain>(chain).invoke(shared, std::forward<Args>(args)...);
+    } else {
+        // Keep any handle the chain returns (e.g. continuation future or cancellation handle).
+        auto hold = std::forward<Chain>(chain).invoke(shared, std::forward<Args>(args)...);
+        (void)hold; // store or return if you later need it
+    }
+    return std::move(future);
 }
 
 } // namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE()

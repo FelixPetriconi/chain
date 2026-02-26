@@ -1,22 +1,14 @@
-target_sources( chain INTERFACE
-        FILE_SET headers
-        TYPE HEADERS
-        BASE_DIRS ../../
-        FILES
-
-        chain.hpp
-        chain_config.hpp
-        on.hpp
-        segment.hpp
-        #split.hpp
-        #start.hpp
-        #sync_wait.hpp
-        #then.hpp
-        tuple.hpp
+target_include_directories( chain INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../>
+    $<INSTALL_INTERFACE:include>
 )
 
-target_sources( chain INTERFACE
-        FILE_SET headers
-        TYPE HEADERS
-        BASE_DIRS ${PROJECT_BINARY_DIR}/include
+set(CHAIN_HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/chain.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/config.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/on.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/segment.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tuple.hpp
 )
+
+target_sources( chain INTERFACE ${CHAIN_HEADERS})

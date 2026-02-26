@@ -7,34 +7,15 @@
 #ifndef STLAB_CHAIN_ON_HPP
 #define STLAB_CHAIN_ON_HPP
 
+#include <stlab/chain/config.hpp>
+#include <stlab/chain/segment.hpp>
+
 #include <atomic>
 #include <memory>
-#include <stlab/chain/chain_config.hpp>
-#include <stlab/chain/segment.hpp>
 #include <tuple>
 #include <utility>
 
 namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE() {
-
-/*
-
-Each segment invokes the next segment with result and returns void. Promise is bound to the
-last item in the chain as a segment.
-
-*/
-template <class E>
-auto on(E&& executor) {
-    return segment{type<void>{},
-                   [_executor = std::forward<E>(executor)]<typename F, typename... Args>(
-                       F&& f, Args&&... args) mutable -> auto {
-                       std::move(_executor)(
-                           [_f = std::forward<F>(f), _args = std::tuple{std::forward<Args>(
-                                                         args)...}]() mutable noexcept -> void {
-                               std::apply(std::move(_f), std::move(_args));
-                           });
-                       // return std::monostate{};
-                   }};
-}
 
 struct cancellation_source {
     struct state {

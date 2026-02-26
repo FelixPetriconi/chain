@@ -4,7 +4,7 @@
     (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
-#include <stlab/chain/segment.hpp>
+#include <stlab/chain/chain.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <stlab/test/model.hpp> // moveonly
