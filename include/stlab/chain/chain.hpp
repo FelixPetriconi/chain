@@ -32,7 +32,7 @@ namespace detail {
 
 /// Apply a recursive lambda to each element in the tuple-like Segments.
 template <class Fold, class Segments>
-constexpr auto fold_over(Fold fold, Segments&& segments) {
+constexpr auto fold_over(Fold fold, Segments&& segments) -> decltype(auto) {
     return std::apply(
         [fold]<typename... Links>(Links&&... links) mutable {
             return fold(fold, std::forward<Links>(links)...);
@@ -147,7 +147,7 @@ public:
     }
 
     template <class Receiver, class... Args>
-    auto invoke(Receiver&& receiver, Args&&... args) && {
+    auto invoke(Receiver&& receiver, Args&&... args) && -> decltype(auto) {
         return std::move(*this).expand(std::forward<Receiver>(receiver))(
             std::forward<Args>(args)...);
     }

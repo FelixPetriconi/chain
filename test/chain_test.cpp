@@ -297,8 +297,9 @@ TEST_CASE("Complex types in chain", "[chain][complex-types]") {
     SECTION("Chain with tuple-like operations") {
         auto a0 = on(immediate_executor) |
                   [](int x) { return std::make_pair(x, std::to_string(x)); } |
-                  on(immediate_executor) |
-                  [](const auto& p) { return p.second + "=" + std::to_string(p.first); };
+                  on(immediate_executor) | [](const std::pair<int, std::string>& p) {
+                      return p.second + "=" + std::to_string(p.first);
+                  };
         auto f = start(std::move(a0), 42);
         REQUIRE(f.get_ready() == std::string("42=42"));
     }

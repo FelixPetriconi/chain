@@ -34,7 +34,7 @@ public:
         the segment.
     */
     template <class... Args>
-    auto result_type_helper(Args&&... args) && {
+    auto result_type_helper(Args&&... args) && -> decltype(auto) {
         return interpret(std::move(_functions))(std::forward<Args>(args)...);
     }
 

@@ -25,7 +25,7 @@ namespace detail {
 /* Map void return to std::monostate */
 template <class F>
 auto void_to_monostate(F& f) {
-    return [&_f = f]<typename... Args>(Args&&... args) mutable -> auto {
+    return [&_f = f]<typename... Args>(Args&&... args) mutable {
         if constexpr (std::is_same_v<decltype(std::move(_f)(std::forward<Args>(args)...)), void>) {
             std::move(_f)(std::forward<Args>(args)...);
             return std::monostate{};
@@ -48,7 +48,7 @@ auto operator|(tuple_pipeable<T>&& p, F& f) {
 
 /* Check if F is invocable with first K elements of tuple T */
 template <class F, class T, std::size_t... Is>
-constexpr auto invocable_with_prefix(std::index_sequence<Is...>) {
+constexpr auto invocable_with_prefix(std::index_sequence<Is...>) -> decltype(auto) {
     return requires(F&& f, T&& tup) { std::invoke(f, std::move(std::get<Is>(tup))...); };
 }
 
@@ -70,7 +70,7 @@ struct find_max_prefix<F, T, 0> {
 
 /* Invoke F with first K elements of tuple t (K known at compile time) */
 template <std::size_t K, class F, class Tuple>
-constexpr auto invoke_prefix(F&& f, Tuple&& t) {
+constexpr auto invoke_prefix(F&& f, Tuple&& t) -> decltype(auto) {
     if constexpr (K == 0) {
         if constexpr (requires(F&& f2) { std::invoke(f2); }) {
             if constexpr (std::is_void_v<decltype(std::invoke(f))>) {
@@ -95,8 +95,8 @@ constexpr auto invoke_prefix(F&& f, Tuple&& t) {
 }
 
 template <std::size_t Offset, class Tuple, std::size_t... Is>
-constexpr auto move_tuple_tail_at_impl(Tuple&& t, std::index_sequence<Is...>) {
-    return std::tuple{std::move(std::get<Offset + Is>(t))...};
+constexpr auto move_tuple_tail_at_impl(Tuple&& t, std::index_sequence<Is...>) -> decltype(auto) {
+    return std::make_tuple(std::move(std::get<Offset + Is>(t))...);
 }
 
 } // namespace detail
@@ -124,7 +124,7 @@ auto tuple_compose(std::tuple<Fs...>&& sequence) {
  * Take the remainder of a given tuple starting at Offset
  */
 template <std::size_t Offset, class Tuple>
-constexpr auto move_tuple_tail_at(Tuple&& t) {
+constexpr auto move_tuple_tail_at(Tuple&& t) -> decltype(auto) {
     return detail::move_tuple_tail_at_impl<Offset, Tuple>(
         std::move(t), std::make_index_sequence<std::tuple_size_v<Tuple> - Offset>{});
 }
@@ -138,8 +138,8 @@ constexpr auto move_tuple_tail_at(Tuple&& t) {
  *  - If callable returns void, result is std::monostate.
  */
 template <class Tuple>
-constexpr auto tuple_consume(Tuple&& values) {
-    return [_values = std::forward<Tuple>(values)]<typename F>(F&& f) mutable -> auto {
+constexpr auto tuple_consume(Tuple&& values) -> decltype(auto) {
+    return [_values = std::forward<Tuple>(values)]<typename F>(F&& f) mutable -> decltype(auto) {
         using tuple_t = std::decay_t<Tuple>;
         constexpr std::size_t N = std::tuple_size_v<tuple_t>;
 
@@ -160,7 +160,7 @@ constexpr auto tuple_consume(Tuple&& values) {
 
 namespace detail {
 template <std::size_t I, typename F, typename T>
-constexpr auto interpret_impl_step(F& f, T t) {
+constexpr auto interpret_impl_step(F& f, T t) -> decltype(auto) {
     if constexpr (I == std::tuple_size_v<F>) {
         // Base case: we finished applying all functions.
         // If there are no remaining tuple elements, return std::monostate
@@ -178,8 +178,8 @@ constexpr auto interpret_impl_step(F& f, T t) {
 }
 
 template <typename F, typename... Args>
-constexpr auto interpret_impl(F f, Args&&... args) {
-    return interpret_impl_step<0>(f, std::tuple{std::forward<Args>(args)...});
+constexpr auto interpret_impl(F f, Args&&... args) -> decltype(auto) {
+    return interpret_impl_step<0>(f, std::make_tuple(std::forward<Args>(args)...));
 }
 } // namespace detail
 
@@ -210,8 +210,9 @@ constexpr auto interpret_impl(F f, Args&&... args) {
  * @return A callable object that can consume all given arguments.
  */
 template <class... Fs>
-constexpr auto interpret(std::tuple<Fs...>&& sequence) {
-    return [_sequence = std::move(sequence)]<typename... Args>(Args&&... args) mutable {
+constexpr auto interpret(std::tuple<Fs...>&& sequence) -> decltype(auto) {
+    return [_sequence =
+                std::move(sequence)]<typename... Args>(Args&&... args) mutable -> decltype(auto) {
         return detail::interpret_impl(std::move(_sequence), std::forward<Args>(args)...);
     };
 }

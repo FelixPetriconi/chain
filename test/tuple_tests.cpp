@@ -15,8 +15,6 @@
 #include <utility>
 #include <variant> // monostate
 
-#if 0
-
 TEST_CASE("Test tuple compose", "[tuple]") {
     std::tuple t{[](int x) -> double { return x + 1.0; },
                  [](double x) -> double { return x * 2.0; },
@@ -576,6 +574,23 @@ TEST_CASE("interpret", "[tuple]") {
         }
     }
 
+    SECTION("test cases with pair<int, string> types") {
+        SECTION("pair<int, string>(int, string) -> pair<int, string>(pair<int, string>)") {
+            auto result =
+                stlab::interpret(std::make_tuple([](const std::pair<int, std::string>& v) {
+                    return v;
+                }))(std::make_pair(42, std::string("test")));
+            CHECK(result == std::make_pair(42, std::string("test")));
+        }
+        SECTION("pair<int, string>(int, string) -> string(pair<int, string>)") {
+            auto result =
+                stlab::interpret(std::make_tuple([](const std::pair<int, std::string>& p) {
+                    return p.second + "=" + std::to_string(p.first);
+                }))(std::make_pair(42, std::string("test")));
+            CHECK(result == std::string("test=42"));
+        }
+    }
+
     SECTION("test cases with no functions") {
         SECTION("empty function tuple with no arguments") {
             auto result = stlab::interpret(std::make_tuple())(/* no args */);
@@ -605,5 +620,3 @@ TEST_CASE("interpret", "[tuple]") {
         }
     }
 }
-
-#endif
