@@ -104,8 +104,9 @@ constexpr auto move_tuple_tail_at_impl(Tuple&& t, std::index_sequence<Is...>) ->
 //--------------------------------------------------------------------------------------------------
 
 template <class... Fs>
-auto tuple_compose(std::tuple<Fs...>&& sequence) {
-    return [_sequence = std::move(sequence)]<typename... Args>(Args&&... args) mutable {
+auto tuple_compose(std::tuple<Fs...>&& sequence) -> decltype(auto) {
+    return [_sequence =
+                std::move(sequence)]<typename... Args>(Args&&... args) mutable -> decltype(auto) {
         return std::move(std::apply(
                              [_args = std::forward_as_tuple(std::forward<Args>(args)...)](
                                  auto& first, auto&... functions) mutable {
@@ -160,7 +161,7 @@ constexpr auto tuple_consume(Tuple&& values) -> decltype(auto) {
 
 namespace detail {
 template <std::size_t I, typename F, typename T>
-constexpr auto interpret_impl_step(F& f, T t) {
+constexpr auto interpret_impl_step(F& f, T t) -> decltype(auto) {
     if constexpr (I == std::tuple_size_v<F>) {
         // Base case: we finished applying all functions.
         // If there are no remaining tuple elements, return std::monostate
