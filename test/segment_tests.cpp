@@ -262,7 +262,19 @@ TEST_CASE("segment with pair<int, string>") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{},
                                   [](const std::pair<int, std::string>& v) { return v; }};
 
-        auto result = stlab::move_allow_trivial(sut).result_type_helper(std::make_pair(42, std::string("test")));
+        auto result = stlab::move_allow_trivial(sut).result_type_helper(
+            std::make_pair(42, std::string("test")));
         CHECK(result == std::make_pair(42, std::string("test")));
+    }
+    SECTION("pair<int, string>(int, string) -> pair<int, string>(pair<int, string>)") {
+        auto sut = stlab::segment{stlab::type<std::tuple<>>{},
+                                  [](const std::pair<int, std::string>& v) { return v; },
+                                  [](const std::pair<int, std::string>& p) {
+                                      return p.second + "=" + std::to_string(p.first);
+                                  }};
+
+        auto result = stlab::move_allow_trivial(sut).result_type_helper(
+            std::make_pair(42, std::string("test")));
+        CHECK(result == std::string("test=42"));
     }
 }

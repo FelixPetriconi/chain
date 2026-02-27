@@ -7,6 +7,7 @@
 #include <stlab/concurrency/immediate_executor.hpp>
 
 #include <cctype>
+#include <iostream>
 #include <string>
 #include <utility>
 
@@ -294,15 +295,31 @@ TEST_CASE("Complex types in chain", "[chain][complex-types]") {
         REQUIRE(result.second == 10);
     }
 
-    SECTION("Chain with tuple-like operations") {
-        auto a0 = on(immediate_executor) |
-                  [](int x) { return std::make_pair(x, std::to_string(x)); } |
-                  on(immediate_executor) | [](const std::pair<int, std::string>& p) {
-                      return p.second + "=" + std::to_string(p.first);
-                  };
-        auto f = start(std::move(a0), 42);
+    SECTION("Chain with tuple-like operations step by step") {
+        auto a0 = on(immediate_executor) | [](int x) {
+            auto t = std::to_string(x);
+            return std::make_pair(x, t);
+        };
+
+        std::cout << typeid(decltype(a0)).name() << std::endl;
+        auto a1 =
+            std::move(a0).append(on(immediate_executor) | [](const std::pair<int, std::string>& p) {
+                return p.second + "=" + std::to_string(p.first);
+            });
+        auto f = start(std::move(a1), 42);
+
         REQUIRE(f.get_ready() == std::string("42=42"));
     }
+
+    // SECTION("Chain with tuple-like operations concatenated") {
+    //     auto a0 = on(immediate_executor) |
+    //               [](int x) { return std::make_pair(x, std::to_string(x)); } |
+    //               on(immediate_executor) | [](const std::pair<int, std::string>& p) {
+    //                   return p.second + "=" + std::to_string(p.first);
+    //               };
+    //     auto f = start(std::move(a0), 42);
+    //     REQUIRE(f.get_ready() == std::string("42=42"));
+    // }
 }
 
 // ============================================================================

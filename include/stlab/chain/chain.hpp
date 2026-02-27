@@ -147,7 +147,7 @@ public:
     }
 
     template <class Receiver, class... Args>
-    auto invoke(Receiver&& receiver, Args&&... args) && -> decltype(auto) {
+    auto invoke(Receiver&& receiver, Args&&... args) && {
         return std::move(*this).expand(std::forward<Receiver>(receiver))(
             std::forward<Args>(args)...);
     }
