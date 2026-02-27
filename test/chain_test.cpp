@@ -295,31 +295,15 @@ TEST_CASE("Complex types in chain", "[chain][complex-types]") {
         REQUIRE(result.second == 10);
     }
 
-    SECTION("Chain with tuple-like operations step by step") {
-        auto a0 = on(immediate_executor) | [](int x) {
-            auto t = std::to_string(x);
-            return std::make_pair(x, t);
-        };
-
-        std::cout << typeid(decltype(a0)).name() << std::endl;
-        auto a1 =
-            std::move(a0).append(on(immediate_executor) | [](const std::pair<int, std::string>& p) {
-                return p.second + "=" + std::to_string(p.first);
-            });
-        auto f = start(std::move(a1), 42);
-
+    SECTION("Chain with tuple-like operations concatenated") {
+        auto a0 = on(immediate_executor) |
+                  [](int x) { return std::make_pair(x, std::to_string(x)); } |
+                  on(immediate_executor) | [](const std::pair<int, std::string>& p) {
+                      return p.second + "=" + std::to_string(p.first);
+                  };
+        auto f = start(std::move(a0), 42);
         REQUIRE(f.get_ready() == std::string("42=42"));
     }
-
-    // SECTION("Chain with tuple-like operations concatenated") {
-    //     auto a0 = on(immediate_executor) |
-    //               [](int x) { return std::make_pair(x, std::to_string(x)); } |
-    //               on(immediate_executor) | [](const std::pair<int, std::string>& p) {
-    //                   return p.second + "=" + std::to_string(p.first);
-    //               };
-    //     auto f = start(std::move(a0), 42);
-    //     REQUIRE(f.get_ready() == std::string("42=42"));
-    // }
 }
 
 // ============================================================================
@@ -392,7 +376,7 @@ TEST_CASE("Multi-stage pipelines", "[chain][pipelines]") {
                   [](int x) { return x / 2; } | on(immediate_executor) |
                   [](int x) { return x + 10; };
         auto f = start(std::move(a0), 10);
-        REQUIRE(f.get_ready() == 14); // (((10+1)*2-3)/2)+10
+        REQUIRE(f.get_ready() == 19); // (((10+1)*2-3)/2)+10
     }
 
     SECTION("Type-changing pipeline") {
@@ -401,7 +385,7 @@ TEST_CASE("Multi-stage pipelines", "[chain][pipelines]") {
                   [](const std::string& s) { return s + "!"; } | on(immediate_executor) |
                   [](const std::string& s) { return s.length(); };
         auto f = start(std::move(a0), 10);
-        REQUIRE(f.get_ready() == 4); // "15!" has length 4
+        REQUIRE(f.get_ready() == 3); // "15!" has length 3
     }
 }
 

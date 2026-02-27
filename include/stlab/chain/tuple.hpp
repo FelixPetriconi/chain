@@ -48,7 +48,7 @@ auto operator|(tuple_pipeable<T>&& p, F& f) {
 
 /* Check if F is invocable with first K elements of tuple T */
 template <class F, class T, std::size_t... Is>
-constexpr auto invocable_with_prefix(std::index_sequence<Is...>) -> decltype(auto) {
+constexpr auto invocable_with_prefix(std::index_sequence<Is...>) {
     return requires(F&& f, T&& tup) { std::invoke(f, std::move(std::get<Is>(tup))...); };
 }
 
@@ -70,7 +70,7 @@ struct find_max_prefix<F, T, 0> {
 
 /* Invoke F with first K elements of tuple t (K known at compile time) */
 template <std::size_t K, class F, class Tuple>
-constexpr auto invoke_prefix(F&& f, Tuple&& t) -> decltype(auto) {
+constexpr auto invoke_prefix(F&& f, Tuple&& t) {
     if constexpr (K == 0) {
         if constexpr (requires(F&& f2) { std::invoke(f2); }) {
             if constexpr (std::is_void_v<decltype(std::invoke(f))>) {
@@ -95,7 +95,7 @@ constexpr auto invoke_prefix(F&& f, Tuple&& t) -> decltype(auto) {
 }
 
 template <std::size_t Offset, class Tuple, std::size_t... Is>
-constexpr auto move_tuple_tail_at_impl(Tuple&& t, std::index_sequence<Is...>) -> decltype(auto) {
+constexpr auto move_tuple_tail_at_impl(Tuple&& t, std::index_sequence<Is...>) {
     return std::make_tuple(std::move(std::get<Offset + Is>(t))...);
 }
 
@@ -104,7 +104,7 @@ constexpr auto move_tuple_tail_at_impl(Tuple&& t, std::index_sequence<Is...>) ->
 //--------------------------------------------------------------------------------------------------
 
 template <class... Fs>
-auto tuple_compose(std::tuple<Fs...>&& sequence) -> decltype(auto) {
+auto tuple_compose(std::tuple<Fs...>&& sequence) {
     return [_sequence = std::move(sequence)]<typename... Args>(Args&&... args) mutable {
         return std::move(std::apply(
                              [_args = std::forward_as_tuple(std::forward<Args>(args)...)](
@@ -124,7 +124,7 @@ auto tuple_compose(std::tuple<Fs...>&& sequence) -> decltype(auto) {
  * Take the remainder of a given tuple starting at Offset
  */
 template <std::size_t Offset, class Tuple>
-constexpr auto move_tuple_tail_at(Tuple&& t) -> decltype(auto) {
+constexpr auto move_tuple_tail_at(Tuple&& t) {
     return detail::move_tuple_tail_at_impl<Offset, Tuple>(
         std::move(t), std::make_index_sequence<std::tuple_size_v<Tuple> - Offset>{});
 }
@@ -138,7 +138,7 @@ constexpr auto move_tuple_tail_at(Tuple&& t) -> decltype(auto) {
  *  - If callable returns void, result is std::monostate.
  */
 template <class Tuple>
-constexpr auto tuple_consume(Tuple&& values) -> decltype(auto) {
+constexpr auto tuple_consume(Tuple&& values) {
     return [_values = std::forward<Tuple>(values)]<typename F>(F&& f) mutable -> decltype(auto) {
         using tuple_t = std::decay_t<Tuple>;
         constexpr std::size_t N = std::tuple_size_v<tuple_t>;
@@ -159,113 +159,27 @@ constexpr auto tuple_consume(Tuple&& values) -> decltype(auto) {
 //--------------------------------------------------------------------------------------------------
 
 namespace detail {
-
-// Wrapper class to prevent automatic tuple conversion and pair interference
-template <class T>
-struct stack_value {
-    T _value;
-
-    template <typename U>
-    explicit stack_value(U&& v) : _value(std::forward<U>(v)) {}
-
-    auto get() -> T& { return _value; }
-    auto move() -> T&& { return std::move(_value); }
-};
-
-// Helper to wrap values into stack_value, explicitly decaying types
-template <typename... Ts>
-constexpr auto make_stack_tuple(Ts&&... values) -> decltype(auto) {
-    return std::make_tuple(stack_value<std::decay_t<Ts>>{std::forward<Ts>(values)}...);
-}
-
-// Check if F is invocable with first K unwrapped elements of stack tuple T
-template <class F, class T, std::size_t... Is>
-constexpr auto invocable_with_unwrapped_prefix(std::index_sequence<Is...>) -> decltype(auto) {
-    return requires(F&& f, T&& tup) { std::invoke(f, std::move(std::get<Is>(tup)._value)...); };
-}
-
-// Find the largest prefix size for unwrapped stack values
-template <class F, class T, std::size_t N>
-struct find_max_unwrapped_prefix {
-    static constexpr std::size_t value =
-        invocable_with_unwrapped_prefix<F, T>(std::make_index_sequence<N>{}) ?
-            N :
-            find_max_unwrapped_prefix<F, T, N - 1>::value;
-};
-
-template <class F, class T>
-struct find_max_unwrapped_prefix<F, T, 0> {
-    static constexpr std::size_t value = 0;
-};
-
-// Invoke F with first K unwrapped elements
-template <std::size_t K, class F, class Tuple>
-constexpr auto invoke_unwrapped_prefix(F&& f, Tuple&& t) -> decltype(auto) {
-    if constexpr (K == 0) {
-        if constexpr (requires(F&& f2) { std::invoke(f2); }) {
-            if constexpr (std::is_void_v<decltype(std::invoke(f))>) {
-                std::invoke(f);
-                return stack_value<std::monostate>{std::monostate{}};
-            } else {
-                using result_t = decltype(std::invoke(f));
-                return stack_value<std::decay_t<result_t>>{std::invoke(f)};
-            }
-        } else {
-            return stack_value<std::monostate>{std::monostate{}};
-        }
-    } else {
-        return [&]<std::size_t... Is>(std::index_sequence<Is...>) {
-            if constexpr (std::is_void_v<decltype(std::invoke(
-                              f, std::move(std::get<Is>(t)._value)...))>) {
-                std::invoke(f, std::move(std::get<Is>(t)._value)...);
-                return stack_value<std::monostate>{std::monostate{}};
-            } else {
-                using result_t = decltype(std::invoke(f, std::move(std::get<Is>(t)._value)...));
-                return stack_value<std::decay_t<result_t>>{
-                    std::invoke(f, std::move(std::get<Is>(t)._value)...)};
-            }
-        }(std::make_index_sequence<K>{});
-    }
-}
-
-// Consume from stack tuple with wrapped values
-template <class Tuple, class F>
-constexpr auto stack_tuple_consume(Tuple&& values, F&& f) -> decltype(auto) {
-    using tuple_t = std::decay_t<Tuple>;
-    constexpr std::size_t N = std::tuple_size_v<tuple_t>;
-
-    constexpr std::size_t consumed = find_max_unwrapped_prefix<F, tuple_t, N>::value;
-    auto result = invoke_unwrapped_prefix<consumed>(std::forward<F>(f), values);
-
-    if constexpr (consumed == 0) {
-        return std::tuple_cat(std::make_tuple(std::move(result)), std::move(values));
-    } else {
-        auto remaining = move_tuple_tail_at<consumed, tuple_t>(std::move(values));
-        return std::tuple_cat(std::make_tuple(std::move(result)), std::move(remaining));
-    }
-}
-
 template <std::size_t I, typename F, typename T>
-constexpr auto interpret_impl_step(F& f, T t) -> decltype(auto) {
+constexpr auto interpret_impl_step(F& f, T t) {
     if constexpr (I == std::tuple_size_v<F>) {
         // Base case: we finished applying all functions.
+        // If there are no remaining tuple elements, return std::monostate
+        // (mirrors void -> monostate mapping elsewhere).
         if constexpr (std::tuple_size_v<T> == 0) {
-            // No remaining values - return std::monostate
             return std::monostate{};
         } else {
-            // Return first unwrapped value from stack
-            return std::move(std::get<0>(t)._value);
+            return std::get<0>(std::move(t));
         }
     } else {
         auto&& fn = std::get<I>(f);
-        auto next = stack_tuple_consume(std::move(t), fn);
+        auto next = stlab::tuple_consume(std::move(t))(fn);
         return interpret_impl_step<I + 1>(f, std::move(next));
     }
 }
 
 template <typename F, typename... Args>
 constexpr auto interpret_impl(F f, Args&&... args) -> decltype(auto) {
-    return interpret_impl_step<0>(f, make_stack_tuple(std::forward<Args>(args)...));
+    return interpret_impl_step<0>(f, std::make_tuple(std::forward<Args>(args)...));
 }
 } // namespace detail
 

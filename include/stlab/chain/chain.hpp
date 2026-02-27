@@ -16,6 +16,7 @@
 
 #include <exception>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 #define STLAB_FWD(x) std::forward<decltype(x)>(x)
@@ -72,7 +73,7 @@ class chain {
                     };
                 }
             },
-            std::tuple_cat(std::move(tail), std::tuple{std::move(head)}));
+            std::tuple_cat(std::move(tail), std::make_tuple(std::move(head))));
     }
 
     template <class R>
@@ -96,7 +97,7 @@ class chain {
                     };
                 }
             },
-            std::tuple_cat(std::move(_tail), std::tuple{std::move(_head)}));
+            std::tuple_cat(std::move(_tail), std::make_tuple(std::move(_head))));
     }
 
     template <class... Args>
@@ -180,16 +181,16 @@ last item in the chain as a segment.
 */
 template <class E>
 auto on(E&& executor) {
-    return segment{type<void>{},
-                   [_executor = std::forward<E>(executor)]<typename F, typename... Args>(
-                       F&& f, Args&&... args) mutable {
-                       std::move(_executor)(
-                           [_f = std::forward<F>(f),
-                            _args = std::tuple{std::forward<Args>(args)...}]() mutable noexcept {
-                               std::apply(std::move(_f), std::move(_args));
-                           });
-                       // return std::monostate{};
-                   }};
+    return segment{
+        type<void>{}, [_executor = std::forward<E>(executor)]<typename F, typename... Args>(
+                          F&& f, Args&&... args) mutable {
+            std::move(_executor)(
+                [_f = std::forward<F>(f),
+                 _args = std::make_tuple(std::forward<Args>(args)...)]() mutable noexcept {
+                    std::apply(std::move(_f), std::move(_args));
+                });
+            // return std::monostate{};
+        }};
 }
 
 } // namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE()

@@ -35,7 +35,7 @@ public:
     */
     template <class... Args>
     auto result_type_helper(Args&&... args) && -> decltype(auto) {
-        return interpret(std::move(_functions))(std::forward<Args>(args)...);
+        return detail::interpret_impl(std::move(_functions), std::forward<Args>(args)...);
     }
 
     explicit segment(type<Injects>, Applicator&& apply, std::tuple<Fs...>&& functions)
