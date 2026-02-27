@@ -160,7 +160,7 @@ constexpr auto tuple_consume(Tuple&& values) -> decltype(auto) {
 
 namespace detail {
 template <std::size_t I, typename F, typename T>
-constexpr auto interpret_impl_step(F& f, T t) -> decltype(auto) {
+constexpr auto interpret_impl_step(F& f, T t) {
     if constexpr (I == std::tuple_size_v<F>) {
         // Base case: we finished applying all functions.
         // If there are no remaining tuple elements, return std::monostate

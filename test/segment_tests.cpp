@@ -4,7 +4,9 @@
     (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
-#include <stlab/chain/chain.hpp>
+#include "stlab/chain/traits.hpp"
+
+#include <stlab/chain/segment.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 #include <stlab/test/model.hpp> // moveonly
@@ -259,7 +261,7 @@ TEST_CASE("segment with pair<int, string>") {
     SECTION("pair<int, string>(int, string) -> pair<int, string>(pair<int, string>)") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{},
                                   [](const std::pair<int, std::string>& v) { return v; }};
-        auto result = std::move(sut).result_type_helper(std::make_pair(42, std::string("test")));
+        auto result = stlab::move_allow_trivial(sut).result_type_helper(std::make_pair(42, std::string("test")));
 
         CHECK(result == std::make_pair(42, std::string("test")));
     }

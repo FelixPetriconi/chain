@@ -1,12 +1,12 @@
 #include <stlab/chain/chain.hpp>
 #include <stlab/chain/on.hpp>
-#include <stlab/chain/segment.hpp>
 #include <stlab/chain/start.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
 #include <stlab/concurrency/immediate_executor.hpp>
 
+#include <cctype>
 #include <string>
 #include <utility>
 
@@ -312,7 +312,7 @@ TEST_CASE("Complex types in chain", "[chain][complex-types]") {
 TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
     SECTION("with_cancellation basic operation") {
         cancellation_source src;
-        auto a0 = with_cancellation(src) | [](cancellation_token token, int x) {
+        auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
             if (token.canceled()) return 0;
             return x * 2;
         };
@@ -322,7 +322,7 @@ TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
 
     SECTION("with_cancellation before cancel") {
         cancellation_source src;
-        auto a0 = with_cancellation(src) | [](cancellation_token token, int x) {
+        auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
             if (token.canceled()) return 0;
             return x * 2;
         };
@@ -333,7 +333,7 @@ TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
     SECTION("with_cancellation after cancel") {
         cancellation_source src;
         src.cancel();
-        auto a0 = with_cancellation(src) | [](cancellation_token token, int x) {
+        auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
             if (token.canceled()) return 0;
             return x * 3;
         };
@@ -343,7 +343,7 @@ TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
 
     SECTION("with_cancellation then chain operations") {
         cancellation_source src;
-        auto a0 = with_cancellation(src) | [](cancellation_token token, int x) {
+        auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
             if (token.canceled()) return 0;
             return x * 2;
         } | [](int y) { return y + 10; };
@@ -354,7 +354,7 @@ TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
     SECTION("with_cancellation cancel before chain") {
         cancellation_source src;
         src.cancel();
-        auto a0 = with_cancellation(src) | [](cancellation_token token, int x) {
+        auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
             if (token.canceled()) return 0;
             return x * 2;
         } | [](int y) { return y + 10; };
