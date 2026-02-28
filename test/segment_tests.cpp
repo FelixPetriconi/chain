@@ -8,7 +8,7 @@
 
 #include <stlab/chain/segment.hpp>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 #include <stlab/test/model.hpp> // moveonly
 
 #include <exception>
@@ -29,35 +29,35 @@ struct mock_receiver {
     auto set_value(int value) -> void { _result = value; }
 };
 
-TEST_CASE("Basic segment operations", "[segment]") {
-    SECTION("simple creation with variadic constructor") {
+TEST_CASE("[segment] Basic segment operations") {
+    SUBCASE("simple creation with variadic constructor") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                   []() -> int { return 42; }};
         (void)sut;
     }
 
-    SECTION("simple creation with tuple constructor") {
+    SUBCASE("simple creation with tuple constructor") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                   std::make_tuple([]() -> int { return 42; })};
         (void)sut;
     }
 
-    SECTION("creation with multiple functions") {
+    SUBCASE("creation with multiple functions") {
         auto sut =
             stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                            [](int x) -> int { return x + 1; }, [](int x) -> int { return x * 2; }};
         (void)sut;
     }
 
-    SECTION("creation with empty function tuple") {
+    SUBCASE("creation with empty function tuple") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                   std::tuple<>{}};
         (void)sut;
     }
 }
 
-TEST_CASE("Segment copy and move semantics", "[segment]") {
-    SECTION("copy constructor") {
+TEST_CASE("[segment] Segment copy and move semantics") {
+    SUBCASE("copy constructor") {
         auto original = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                        []() -> int { return 42; }};
         auto copy{original};
@@ -68,7 +68,7 @@ TEST_CASE("Segment copy and move semantics", "[segment]") {
         CHECK(copy_result == 42);
     }
 
-    SECTION("move constructor") {
+    SUBCASE("move constructor") {
         auto reference = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                         []() -> int { return 42; }};
 
@@ -82,7 +82,7 @@ TEST_CASE("Segment copy and move semantics", "[segment]") {
         CHECK(reference_result == 42);
     }
 
-    SECTION("segment with move-only types") {
+    SUBCASE("segment with move-only types") {
         auto reference = stlab::segment{
             stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
             [m = stlab::move_only(42)]() mutable -> stlab::move_only { return std::move(m); }};
@@ -98,15 +98,15 @@ TEST_CASE("Segment copy and move semantics", "[segment]") {
     }
 }
 
-TEST_CASE("Segment result_type_helper", "[segment]") {
-    SECTION("single function returning int") {
+TEST_CASE("[segment] Segment result_type_helper") {
+    SUBCASE("single function returning int") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                   []() -> int { return 42; }};
         auto result = std::move(sut).result_type_helper();
         CHECK(result == 42);
     }
 
-    SECTION("function chain with transformations") {
+    SUBCASE("function chain with transformations") {
         auto sut =
             stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                            [](int x) -> int { return x + 1; }, [](int x) -> int { return x * 2; }};
@@ -114,7 +114,7 @@ TEST_CASE("Segment result_type_helper", "[segment]") {
         CHECK(result == 12); // (5 + 1) * 2 = 12
     }
 
-    SECTION("function chain returning string") {
+    SUBCASE("function chain returning string") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                   [](int x) -> int { return x * 2; },
                                   [](int x) -> std::string { return std::to_string(x); }};
@@ -122,7 +122,7 @@ TEST_CASE("Segment result_type_helper", "[segment]") {
         CHECK(result == "42");
     }
 
-    SECTION("void returning function") {
+    SUBCASE("void returning function") {
         auto hit = 0;
         auto sut = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                   [&hit](int x) -> void { hit = x; }};
@@ -131,8 +131,8 @@ TEST_CASE("Segment result_type_helper", "[segment]") {
     }
 }
 
-TEST_CASE("Segment invoke with receiver", "[segment]") {
-    SECTION("invoke with non-canceled receiver") {
+TEST_CASE("[segment] Segment invoke with receiver") {
+    SUBCASE("invoke with non-canceled receiver") {
         auto receiver = std::make_shared<mock_receiver>();
         auto hit = 0;
         auto sut = stlab::segment{stlab::type<std::tuple<>>{},
@@ -144,7 +144,7 @@ TEST_CASE("Segment invoke with receiver", "[segment]") {
         CHECK(receiver->_exception == nullptr);
     }
 
-    SECTION("invoke with canceled receiver") {
+    SUBCASE("invoke with canceled receiver") {
         auto receiver = std::make_shared<mock_receiver>();
         receiver->_canceled = true;
         auto hit = 0;
@@ -156,7 +156,7 @@ TEST_CASE("Segment invoke with receiver", "[segment]") {
         CHECK(hit == 0); // Should not execute
     }
 
-    SECTION("invoke with exception in segment") {
+    SUBCASE("invoke with exception in segment") {
         auto receiver = std::make_shared<mock_receiver>();
         auto sut = stlab::segment{stlab::type<std::tuple<>>{},
                                   [](auto f, auto... args) -> void { f(args...); },
@@ -178,7 +178,7 @@ TEST_CASE("Segment invoke with receiver", "[segment]") {
         CHECK(caught_exception);
     }
 
-    SECTION("invoke with applicator that modifies behavior") {
+    SUBCASE("invoke with applicator that modifies behavior") {
         auto receiver = std::make_shared<mock_receiver>();
         auto hit = 0;
 
@@ -192,7 +192,7 @@ TEST_CASE("Segment invoke with receiver", "[segment]") {
         CHECK(hit == 42); // 21 * 2 = 42
     }
 
-    SECTION("invoke with chained functions") {
+    SUBCASE("invoke with chained functions") {
         auto receiver = std::make_shared<mock_receiver>();
         auto result = 0;
         auto sut = stlab::segment{
@@ -206,15 +206,15 @@ TEST_CASE("Segment invoke with receiver", "[segment]") {
     }
 }
 
-TEST_CASE("Segment with injected types", "[segment]") {
-    SECTION("segment with int injection") {
+TEST_CASE("[segment] Segment with injected types") {
+    SUBCASE("segment with int injection") {
         auto sut = stlab::segment{stlab::type<std::tuple<int>>{}, [](auto f) -> void { f(); },
                                   []() -> int { return 42; }};
         // Segment should be constructible with injection type
         (void)sut;
     }
 
-    SECTION("segment with multiple injection types") {
+    SUBCASE("segment with multiple injection types") {
         auto sut = stlab::segment{stlab::type<std::tuple<int, std::string>>{},
                                   [](auto f) -> void { f(); }, []() -> int { return 42; }};
         // Segment should be constructible with multiple injection types
@@ -222,15 +222,15 @@ TEST_CASE("Segment with injected types", "[segment]") {
     }
 }
 
-TEST_CASE("Segment edge cases", "[segment]") {
-    SECTION("empty segment with no functions") {
+TEST_CASE("[segment] Segment edge cases") {
+    SUBCASE("empty segment with no functions") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                   std::tuple<>{}};
         // Should be constructible
         (void)sut;
     }
 
-    SECTION("segment with void function") {
+    SUBCASE("segment with void function") {
         auto hit = false;
         auto sut = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                   [&hit]() -> void { hit = true; }};
@@ -238,7 +238,7 @@ TEST_CASE("Segment edge cases", "[segment]") {
         CHECK(hit);
     }
 
-    SECTION("segment with multiple void functions") {
+    SUBCASE("segment with multiple void functions") {
         auto hit1 = false;
         auto hit2 = false;
         auto sut =
@@ -249,7 +249,7 @@ TEST_CASE("Segment edge cases", "[segment]") {
         CHECK(hit2);
     }
 
-    SECTION("segment with variadic function") {
+    SUBCASE("segment with variadic function") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{}, [](auto f) -> void { f(); },
                                   [](auto... args) -> int { return (args + ...); }};
         auto result = std::move(sut).result_type_helper(1, 2, 3, 4);
@@ -258,7 +258,7 @@ TEST_CASE("Segment edge cases", "[segment]") {
 }
 
 TEST_CASE("segment with pair<int, string>") {
-    SECTION("pair<int, string>(int, string) -> pair<int, string>(pair<int, string>)") {
+    SUBCASE("pair<int, string>(int, string) -> pair<int, string>(pair<int, string>)") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{},
                                   [](const std::pair<int, std::string>& v) { return v; }};
 
@@ -266,7 +266,7 @@ TEST_CASE("segment with pair<int, string>") {
             std::make_pair(42, std::string("test")));
         CHECK(result == std::make_pair(42, std::string("test")));
     }
-    SECTION("pair<int, string>(int, string) -> pair<int, string>(pair<int, string>)") {
+    SUBCASE("pair<int, string>(int, string) -> pair<int, string>(pair<int, string>)") {
         auto sut = stlab::segment{stlab::type<std::tuple<>>{},
                                   [](const std::pair<int, std::string>& v) { return v; },
                                   [](const std::pair<int, std::string>& p) {

@@ -2,7 +2,7 @@
 #include <stlab/chain/on.hpp>
 #include <stlab/chain/start.hpp>
 
-#include <catch2/catch_test_macros.hpp>
+#include <doctest/doctest.h>
 
 #include <stlab/concurrency/immediate_executor.hpp>
 
@@ -17,14 +17,14 @@ using namespace stlab;
 // Basic Chain Operations Tests
 // ============================================================================
 
-TEST_CASE("Basic chain operations", "[chain]") {
-    SECTION("Chain with single lambda") {
+TEST_CASE("[chain] Basic chain operations") {
+    SUBCASE("Chain with single lambda") {
         auto a0 = on(immediate_executor) | [](int x) { return x * 2; };
         auto f = start(std::move(a0), 42);
         REQUIRE(f.get_ready() == 84);
     }
 
-    SECTION("Chain with two lambdas") {
+    SUBCASE("Chain with two lambdas") {
         auto a0 = on(immediate_executor) | [](int x) { return x * 2; } | on(immediate_executor) |
                   [](int x) { return std::to_string(x); } | on(immediate_executor) |
                   [](const std::string& s) { return s + "!"; };
@@ -34,7 +34,7 @@ TEST_CASE("Basic chain operations", "[chain]") {
         REQUIRE(val == std::string("84!"));
     }
 
-    SECTION("Chain with three lambdas") {
+    SUBCASE("Chain with three lambdas") {
         auto a0 = on(immediate_executor) | [](int x) { return x + 10; } | on(immediate_executor) |
                   [](int x) { return x * 2; } | on(immediate_executor) |
                   [](int x) { return x - 5; };
@@ -48,27 +48,27 @@ TEST_CASE("Basic chain operations", "[chain]") {
 // Type Conversion Tests
 // ============================================================================
 
-TEST_CASE("Type conversions in chain", "[chain][types]") {
-    SECTION("int to string") {
+TEST_CASE("[chain] Type conversions in chain") {
+    SUBCASE("int to string") {
         auto a0 = on(immediate_executor) | [](int x) { return std::to_string(x); };
         auto f = start(std::move(a0), 123);
         REQUIRE(f.get_ready() == std::string("123"));
     }
 
-    SECTION("string to int") {
+    SUBCASE("string to int") {
         auto a0 = on(immediate_executor) |
                   [](const std::string& s) { return static_cast<int>(s.length()); };
         auto f = start(std::move(a0), std::string("hello"));
         REQUIRE(f.get_ready() == 5);
     }
 
-    SECTION("int to double") {
+    SUBCASE("int to double") {
         auto a0 = on(immediate_executor) | [](int x) { return static_cast<double>(x) * 1.5; };
         auto f = start(std::move(a0), 10);
         REQUIRE(f.get_ready() == 15.0);
     }
 
-    SECTION("double to int") {
+    SUBCASE("double to int") {
         auto a0 = on(immediate_executor) | [](double x) { return static_cast<int>(x); };
         auto f = start(std::move(a0), 3.7);
         REQUIRE(f.get_ready() == 3);
@@ -79,22 +79,22 @@ TEST_CASE("Type conversions in chain", "[chain][types]") {
 // Arithmetic Operations Tests
 // ============================================================================
 
-TEST_CASE("Arithmetic operations in chain", "[chain][arithmetic]") {
-    SECTION("Addition chain") {
+TEST_CASE("[chain] Arithmetic operations in chain") {
+    SUBCASE("Addition chain") {
         auto a0 = on(immediate_executor) | [](int x) { return x + 5; } | on(immediate_executor) |
                   [](int x) { return x + 3; };
         auto f = start(std::move(a0), 10);
         REQUIRE(f.get_ready() == 18);
     }
 
-    SECTION("Multiplication chain") {
+    SUBCASE("Multiplication chain") {
         auto a0 = on(immediate_executor) | [](int x) { return x * 2; } | on(immediate_executor) |
                   [](int x) { return x * 3; };
         auto f = start(std::move(a0), 5);
         REQUIRE(f.get_ready() == 30);
     }
 
-    SECTION("Mixed arithmetic operations") {
+    SUBCASE("Mixed arithmetic operations") {
         auto a0 = on(immediate_executor) | [](int x) { return x * 2; } | on(immediate_executor) |
                   [](int x) { return x + 10; } | on(immediate_executor) |
                   [](int x) { return x / 2; };
@@ -102,7 +102,7 @@ TEST_CASE("Arithmetic operations in chain", "[chain][arithmetic]") {
         REQUIRE(f.get_ready() == 13); // ((8*2)+10)/2
     }
 
-    SECTION("Modulo operations") {
+    SUBCASE("Modulo operations") {
         auto a0 = on(immediate_executor) | [](int x) { return x % 5; };
         auto f = start(std::move(a0), 17);
         REQUIRE(f.get_ready() == 2);
@@ -113,27 +113,27 @@ TEST_CASE("Arithmetic operations in chain", "[chain][arithmetic]") {
 // String Operations Tests
 // ============================================================================
 
-TEST_CASE("String operations in chain", "[chain][strings]") {
-    SECTION("String concatenation") {
+TEST_CASE("[chain] String operations in chain") {
+    SUBCASE("String concatenation") {
         auto a0 = on(immediate_executor) | [](const std::string& s) { return s + " World"; };
         auto f = start(std::move(a0), std::string("Hello"));
         REQUIRE(f.get_ready() == std::string("Hello World"));
     }
 
-    SECTION("String length operation") {
+    SUBCASE("String length operation") {
         auto a0 = on(immediate_executor) | [](const std::string& s) { return s.length(); };
         auto f = start(std::move(a0), std::string("test"));
         REQUIRE(f.get_ready() == 4);
     }
 
-    SECTION("Chain string transformations") {
+    SUBCASE("Chain string transformations") {
         auto a0 = on(immediate_executor) | [](const std::string& s) { return s + "!"; } |
                   on(immediate_executor) | [](const std::string& s) { return s + "!"; };
         auto f = start(std::move(a0), std::string("Hi"));
         REQUIRE(f.get_ready() == std::string("Hi!!"));
     }
 
-    SECTION("String to uppercase pattern") {
+    SUBCASE("String to uppercase pattern") {
         auto a0 = on(immediate_executor) | [](const std::string& s) {
             std::string result = s;
             for (auto& c : result) {
@@ -150,27 +150,27 @@ TEST_CASE("String operations in chain", "[chain][strings]") {
 // Boolean/Conditional Logic Tests
 // ============================================================================
 
-TEST_CASE("Conditional logic in chain", "[chain][conditionals]") {
-    SECTION("Simple conditional") {
+TEST_CASE("[chain] Conditional logic in chain") {
+    SUBCASE("Simple conditional") {
         auto a0 = on(immediate_executor) | [](int x) { return x > 10 ? 100 : 50; };
         auto f = start(std::move(a0), 15);
         REQUIRE(f.get_ready() == 100);
     }
 
-    SECTION("Conditional returning false") {
+    SUBCASE("Conditional returning false") {
         auto a0 = on(immediate_executor) | [](int x) { return x > 10 ? 100 : 50; };
         auto f = start(std::move(a0), 5);
         REQUIRE(f.get_ready() == 50);
     }
 
-    SECTION("Chain with conditional transformation") {
+    SUBCASE("Chain with conditional transformation") {
         auto a0 = on(immediate_executor) | [](int x) { return x * 2; } | on(immediate_executor) |
                   [](int x) { return x > 50 ? true : false; };
         auto f = start(std::move(a0), 30);
         REQUIRE(f.get_ready() == true);
     }
 
-    SECTION("Multiple conditional chains") {
+    SUBCASE("Multiple conditional chains") {
         auto a0 = on(immediate_executor) | [](int x) { return x > 0 ? x : -x; } |
                   on(immediate_executor) | [](int x) { return x < 10 ? 10 : x; };
         auto f = start(std::move(a0), -5);
@@ -182,38 +182,38 @@ TEST_CASE("Conditional logic in chain", "[chain][conditionals]") {
 // Edge Cases and Boundary Tests
 // ============================================================================
 
-TEST_CASE("Edge cases and boundary conditions", "[chain][edge-cases]") {
-    SECTION("Zero as input") {
+TEST_CASE("[chain] Edge cases and boundary conditions") {
+    SUBCASE("Zero as input") {
         auto a0 = on(immediate_executor) | [](int x) { return x + 0; };
         auto f = start(std::move(a0), 0);
         REQUIRE(f.get_ready() == 0);
     }
 
-    SECTION("Negative numbers") {
+    SUBCASE("Negative numbers") {
         auto a0 = on(immediate_executor) | [](int x) { return x * -1; };
         auto f = start(std::move(a0), -5);
         REQUIRE(f.get_ready() == 5);
     }
 
-    SECTION("Large numbers") {
+    SUBCASE("Large numbers") {
         auto a0 = on(immediate_executor) | [](long x) { return x + 1000000L; };
         auto f = start(std::move(a0), 9000000L);
         REQUIRE(f.get_ready() == 10000000L);
     }
 
-    SECTION("Empty string") {
+    SUBCASE("Empty string") {
         auto a0 = on(immediate_executor) | [](const std::string& s) { return s.empty(); };
         auto f = start(std::move(a0), std::string(""));
         REQUIRE(f.get_ready() == true);
     }
 
-    SECTION("Single character string") {
+    SUBCASE("Single character string") {
         auto a0 = on(immediate_executor) | [](const std::string& s) { return s.length(); };
         auto f = start(std::move(a0), std::string("a"));
         REQUIRE(f.get_ready() == 1);
     }
 
-    SECTION("Chain with identity function") {
+    SUBCASE("Chain with identity function") {
         auto a0 = on(immediate_executor) | [](int x) { return x; };
         auto f = start(std::move(a0), 42);
         REQUIRE(f.get_ready() == 42);
@@ -224,20 +224,20 @@ TEST_CASE("Edge cases and boundary conditions", "[chain][edge-cases]") {
 // Future-Related Tests
 // ============================================================================
 
-TEST_CASE("Future operations", "[chain][futures]") {
-    SECTION("Future is ready after start") {
+TEST_CASE("[chain] Future operations") {
+    SUBCASE("Future is ready after start") {
         auto a0 = on(immediate_executor) | [](int x) { return x * 2; };
         auto f = start(std::move(a0), 10);
         REQUIRE(f.is_ready());
     }
 
-    SECTION("get_ready returns correct value") {
+    SUBCASE("get_ready returns correct value") {
         auto a0 = on(immediate_executor) | [](int x) { return x + 5; };
         auto f = start(std::move(a0), 10);
         REQUIRE(f.get_ready() == 15);
     }
 
-    SECTION("Multiple chain invocations with different inputs") {
+    SUBCASE("Multiple chain invocations with different inputs") {
         auto a0 = on(immediate_executor) | [](int x) { return x * 2; };
 
         auto f1 = start(std::move(a0), 5);
@@ -253,27 +253,27 @@ TEST_CASE("Future operations", "[chain][futures]") {
 // Functional Programming Tests
 // ============================================================================
 
-TEST_CASE("Functional programming patterns", "[chain][functional]") {
-    SECTION("Map-like operation") {
+TEST_CASE("[chain] Functional programming patterns") {
+    SUBCASE("Map-like operation") {
         auto a0 = on(immediate_executor) | [](int x) { return x * 2; } | on(immediate_executor) |
                   [](int x) { return x + 1; };
         auto f = start(std::move(a0), 5);
         REQUIRE(f.get_ready() == 11); // (5*2)+1
     }
 
-    SECTION("Filter-like operation via conditional") {
+    SUBCASE("Filter-like operation via conditional") {
         auto a0 = on(immediate_executor) | [](int x) { return (x % 2 == 0) ? x : 0; };
         auto f = start(std::move(a0), 4);
         REQUIRE(f.get_ready() == 4);
     }
 
-    SECTION("Filter-like operation removing odd") {
+    SUBCASE("Filter-like operation removing odd") {
         auto a0 = on(immediate_executor) | [](int x) { return (x % 2 == 0) ? x : 0; };
         auto f = start(std::move(a0), 5);
         REQUIRE(f.get_ready() == 0);
     }
 
-    SECTION("Fold-like operation in chain") {
+    SUBCASE("Fold-like operation in chain") {
         auto a0 = on(immediate_executor) | [](int x) { return x + 10; } | on(immediate_executor) |
                   [](int x) { return x * 2; } | on(immediate_executor) |
                   [](int x) { return x - 5; };
@@ -286,8 +286,8 @@ TEST_CASE("Functional programming patterns", "[chain][functional]") {
 // Complex Type Tests
 // ============================================================================
 
-TEST_CASE("Complex types in chain", "[chain][complex-types]") {
-    SECTION("Return pair") {
+TEST_CASE("[chain] Complex types in chain") {
+    SUBCASE("Return pair") {
         auto a0 = on(immediate_executor) | [](int x) { return std::make_pair(x, x * 2); };
         auto f = start(std::move(a0), 5);
         auto result = f.get_ready();
@@ -295,7 +295,7 @@ TEST_CASE("Complex types in chain", "[chain][complex-types]") {
         REQUIRE(result.second == 10);
     }
 
-    SECTION("Chain with tuple-like operations concatenated") {
+    SUBCASE("Chain with tuple-like operations concatenated") {
         auto a0 = on(immediate_executor) |
                   [](int x) { return std::make_pair(x, std::to_string(x)); } |
                   on(immediate_executor) | [](const std::pair<int, std::string>& p) {
@@ -310,8 +310,8 @@ TEST_CASE("Complex types in chain", "[chain][complex-types]") {
 // Cancellation Tests
 // ============================================================================
 
-TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
-    SECTION("with_cancellation basic operation") {
+TEST_CASE("[chain] Cancellation functionality") {
+    SUBCASE("with_cancellation basic operation") {
         cancellation_source src;
         auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
             if (token.canceled()) return 0;
@@ -321,7 +321,7 @@ TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
         REQUIRE(f.get_ready() == 10);
     }
 
-    SECTION("with_cancellation before cancel") {
+    SUBCASE("with_cancellation before cancel") {
         cancellation_source src;
         auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
             if (token.canceled()) return 0;
@@ -331,7 +331,7 @@ TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
         REQUIRE(f.get_ready() == 10);
     }
 
-    SECTION("with_cancellation after cancel") {
+    SUBCASE("with_cancellation after cancel") {
         cancellation_source src;
         src.cancel();
         auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
@@ -342,7 +342,7 @@ TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
         REQUIRE(f.get_ready() == 0);
     }
 
-    SECTION("with_cancellation then chain operations") {
+    SUBCASE("with_cancellation then chain operations") {
         cancellation_source src;
         auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
             if (token.canceled()) return 0;
@@ -352,7 +352,7 @@ TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
         REQUIRE(f.get_ready() == 20); // (5*2)+10
     }
 
-    SECTION("with_cancellation cancel before chain") {
+    SUBCASE("with_cancellation cancel before chain") {
         cancellation_source src;
         src.cancel();
         auto a0 = with_cancellation(src) | [](const cancellation_token& token, int x) {
@@ -368,8 +368,8 @@ TEST_CASE("Cancellation functionality", "[chain][cancellation]") {
 // Multi-Stage Pipeline Tests
 // ============================================================================
 
-TEST_CASE("Multi-stage pipelines", "[chain][pipelines]") {
-    SECTION("Five-stage pipeline") {
+TEST_CASE("[chain] Multi-stage pipelines") {
+    SUBCASE("Five-stage pipeline") {
         auto a0 = on(immediate_executor) | [](int x) { return x + 1; } | on(immediate_executor) |
                   [](int x) { return x * 2; } | on(immediate_executor) |
                   [](int x) { return x - 3; } | on(immediate_executor) |
@@ -379,7 +379,7 @@ TEST_CASE("Multi-stage pipelines", "[chain][pipelines]") {
         REQUIRE(f.get_ready() == 19); // (((10+1)*2-3)/2)+10
     }
 
-    SECTION("Type-changing pipeline") {
+    SUBCASE("Type-changing pipeline") {
         auto a0 = on(immediate_executor) | [](int x) { return x + 5; } | on(immediate_executor) |
                   [](int x) { return std::to_string(x); } | on(immediate_executor) |
                   [](const std::string& s) { return s + "!"; } | on(immediate_executor) |
@@ -393,21 +393,21 @@ TEST_CASE("Multi-stage pipelines", "[chain][pipelines]") {
 // Double/Float Operations Tests
 // ============================================================================
 
-TEST_CASE("Floating-point operations", "[chain][floats]") {
-    SECTION("Simple double multiplication") {
+TEST_CASE("[chain] Floating-point operations") {
+    SUBCASE("Simple double multiplication") {
         auto a0 = on(immediate_executor) | [](double x) { return x * 2.5; };
         auto f = start(std::move(a0), 4.0);
         REQUIRE(f.get_ready() == 10.0);
     }
 
-    SECTION("Double precision chain") {
+    SUBCASE("Double precision chain") {
         auto a0 = on(immediate_executor) | [](double x) { return x + 0.1; } |
                   on(immediate_executor) | [](double x) { return x * 2.0; };
         auto f = start(std::move(a0), 1.0);
         REQUIRE(f.get_ready() == 2.2);
     }
 
-    SECTION("Float to int conversion") {
+    SUBCASE("Float to int conversion") {
         auto a0 = on(immediate_executor) | [](float x) { return x * 2.0f; } |
                   on(immediate_executor) | [](float x) { return static_cast<int>(x); };
         auto f = start(std::move(a0), 2.5f);

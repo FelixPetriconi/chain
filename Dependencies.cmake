@@ -17,12 +17,12 @@ function(chain_setup_dependencies)
     endif ()
 
 
-    if (NOT TARGET Catch2::Catch2WithMain)
-        cpmaddpackage("gh:catchorg/Catch2@3.3.2")
+    if (NOT TARGET doctest::doctest)
+        cpmaddpackage("gh:doctest/doctest@2.4.12")
     endif ()
 
-    if (NOT TARGET tools::tools)
-        cpmaddpackage("gh:lefticus/tools#update_build_system")
-    endif ()
+#    if (NOT TARGET tools::tools)
+#        cpmaddpackage("gh:lefticus/tools#update_build_system")
+#    endif ()
 
 endfunction()
