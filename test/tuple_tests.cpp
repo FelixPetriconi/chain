@@ -619,4 +619,10 @@ TEST_CASE("[tuple] interpret") {
             CHECK(result == 6);
         }
     }
+
+    SUBCASE("Visual Studio regression test case") {
+        auto result = stlab::interpret(std::make_tuple([](int x) -> int { return x + 1; },
+                                                       [](int x) -> int { return x * 2; }))(5);
+        CHECK(result == 12);
+    }
 }

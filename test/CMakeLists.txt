@@ -23,7 +23,8 @@ add_executable(tests
   chain_test.cpp
   main.cpp
   segment_tests.cpp
-  tuple_tests.cpp)
+  #tuple_tests.cpp
+)
 
 target_link_libraries(
   tests

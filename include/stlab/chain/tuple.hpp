@@ -139,7 +139,7 @@ constexpr auto move_tuple_tail_at(Tuple&& t) {
  */
 template <class Tuple>
 constexpr auto tuple_consume(Tuple&& values) {
-    return [_values = std::forward<Tuple>(values)]<typename F>(F&& f) mutable -> decltype(auto) {
+    return [_values = std::forward<Tuple>(values)]<typename F>(F&& f) mutable {
         using tuple_t = std::decay_t<Tuple>;
         constexpr std::size_t N = std::tuple_size_v<tuple_t>;
 
@@ -178,7 +178,7 @@ constexpr auto interpret_impl_step(F& f, T t) {
 }
 
 template <typename F, typename... Args>
-constexpr auto interpret_impl(F f, Args&&... args) -> decltype(auto) {
+constexpr auto interpret_impl(F f, Args&&... args) {
     return interpret_impl_step<0>(f, std::make_tuple(std::forward<Args>(args)...));
 }
 } // namespace detail
@@ -210,9 +210,8 @@ constexpr auto interpret_impl(F f, Args&&... args) -> decltype(auto) {
  * @return A callable object that can consume all given arguments.
  */
 template <class... Fs>
-constexpr auto interpret(std::tuple<Fs...>&& sequence) -> decltype(auto) {
-    return [_sequence =
-                std::move(sequence)]<typename... Args>(Args&&... args) mutable -> decltype(auto) {
+constexpr auto interpret(std::tuple<Fs...>&& sequence) {
+    return [_sequence = std::move(sequence)]<typename... Args>(Args&&... args) mutable {
         return detail::interpret_impl(std::move(_sequence), std::forward<Args>(args)...);
     };
 }
