@@ -87,4 +87,4 @@ public:
 
 } // namespace stlab::inline STLAB_CHAIN_VERSION_NAMESPACE()
 
-#endif
+#endif // STLAB_CHAIN_SEGMENT_HPP

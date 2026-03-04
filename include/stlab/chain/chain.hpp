@@ -85,7 +85,9 @@ class chain {
                 if constexpr (sizeof...(rest) == 0) {
                     return [_receiver, _segment = std::forward<First>(first).append(
                                            [_receiver]<typename V>(V&& val) {
-                                               _receiver->operator()(std::forward<V>(val));
+                                               if (_receiver) {
+                                                   _receiver->operator()(std::forward<V>(val));
+                                               }
                                            })]<typename... Args>(Args&&... args) mutable -> auto {
                         return std::move(_segment).invoke(_receiver, std::forward<Args>(args)...);
                     };

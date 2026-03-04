@@ -218,6 +218,33 @@ TEST_CASE("[chain] Edge cases and boundary conditions") {
         auto f = start(std::move(a0), 42);
         REQUIRE(f.get_ready() == 42);
     }
+
+    SUBCASE("Chain with pair<int,int> argument") {
+        auto sut = on(immediate_executor) | [](const auto& v) {
+            return v;
+        } | [](const std::pair<int, int>& v) { return std::make_pair(v.first * 2, v.second * 3); };
+        auto f = start(std::move(sut), std::make_pair(3, 2));
+        CHECK(f.get_ready() == std::make_pair(6, 6));
+    }
+
+    SUBCASE("Chain with tuple<int, string> argument") {
+        auto sut = on(immediate_executor) | [](const auto& v) { return v; } |
+                   [](const std::tuple<int, int, int>& v) {
+                       return std::make_tuple(std::get<0>(v) * 2, std::get<1>(v) * std::get<2>(v));
+                   };
+        auto f = start(std::move(sut), std::make_tuple(1, 2, 3));
+        CHECK(f.get_ready() == std::make_tuple(2, 6));
+    }
+    SUBCASE("Chain with many functions") {
+        auto sut = on(immediate_executor) | [](const auto& v) { return v; } |
+                   [](const auto& v) { return v + 1; } | []() { return 42; } |
+                   [](int a, int b) { return a + b; } | []() { return 13; } | []() { return 15; } |
+                   [](int a) { return a + 10; } |
+                   [](int a, int b, int c) { return std::make_pair(a + b, c); };
+
+        auto f = start(std::move(sut), 3);
+        CHECK(f.get_ready() == std::make_pair(38, 46));
+    }
 }
 
 // ============================================================================
