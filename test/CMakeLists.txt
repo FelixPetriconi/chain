@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15...3.23)
+cmake_minimum_required(VERSION 3.23)
 
 project(CmakeConfigPackageTests
   VERSION ${PROJECT_VERSION}
@@ -19,11 +19,16 @@ endif()
 
 # ---- Dependencies ----
 
-add_executable(tests
+set(TEST_SOURCES
   chain_test.cpp
   main.cpp
   segment_tests.cpp
   tuple_tests.cpp)
+
+set(TEST_HEADERS
+  test_helper.hpp)
+
+add_executable(tests ${TEST_SOURCES} ${TEST_HEADERS})
 
 target_link_libraries(
   tests

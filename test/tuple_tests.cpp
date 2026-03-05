@@ -4,16 +4,19 @@
     (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 */
 
+#include "test_helper.hpp"
+
 #include <stlab/chain/tuple.hpp>
 
 #include <doctest/doctest.h>
-#include <stlab/test/model.hpp> // moveonly
 
 #include <cstddef>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <variant> // monostate
+
+using namespace stlab::test_helper;
 
 TEST_CASE("[tuple] Test tuple compose") {
     std::tuple t{[](int x) -> double { return x + 1.0; },
@@ -127,50 +130,6 @@ TEST_CASE("[tuple] move_tuple_tail_at") {
 }
 
 //--------------------------------------------------------------------------------------------------
-
-struct multi_callable {
-    auto operator()(int a, float b) const -> int { return a * static_cast<int>(b); }
-    auto operator()(int a, float b, int c) const -> int { return a + static_cast<int>(b) + c; }
-};
-
-struct oneInt2Int {
-    auto operator()(int a) const -> int { return a; }
-};
-
-struct twoInt2Int {
-    auto operator()(int a, int b) const -> int { return a + b; }
-};
-struct twoInt2void {
-    int& hit;
-    auto operator()(int a, int b) const -> void { hit = a + b; }
-};
-struct void2Int {
-    auto operator()() const -> int { return 42; }
-};
-struct void2void {
-    bool& hit;
-    auto operator()() -> void { hit = true; }
-};
-struct oneInt2Void {
-    int& hit;
-    auto operator()(auto a) -> void { hit = a; }
-};
-struct string2Int {
-    auto operator()(const std::string& s) const -> std::size_t { return s.size(); }
-};
-struct oneInt2String {
-    auto operator()(int a) const -> std::string { return std::to_string(a); }
-};
-struct moveonly2Int {
-    auto operator()(stlab::move_only m) const -> int { return m.member(); }
-};
-struct oneInt2Moveonly {
-    auto operator()(int a) const -> stlab::move_only { return {a}; }
-};
-struct variadic2Int {
-    auto operator()() const -> int { return 0; }
-    auto operator()(auto... v) const -> int { return (v + ...); }
-};
 
 TEST_CASE("[tuple] Test tuple consume") {
     SUBCASE("A tuple with a single value is passed to tuple_consume") {

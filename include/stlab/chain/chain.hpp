@@ -183,15 +183,40 @@ last item in the chain as a segment.
 */
 template <class E>
 auto on(E&& executor) {
+    return segment{type<void>{},
+                   [_executor = std::forward<E>(executor)]<typename F, typename... Args>(
+                       F&& f, Args&&... args) mutable -> void {
+                       std::move(_executor)([_f = std::forward<F>(f),
+                                             _args = std::make_tuple(
+                                                 std::forward<Args>(args)...)]() mutable noexcept {
+                           std::apply(std::move(_f), std::move(_args));
+                       });
+                   }};
+}
+
+class cancellation_point {
+    std::shared_ptr<std::atomic_bool> _canceled = std::make_shared<std::atomic_bool>(false);
+
+public:
+    void cancel() { _canceled->store(true, std::memory_order_relaxed); }
+    [[nodiscard]] auto canceled() const -> bool {
+        return _canceled->load(std::memory_order_relaxed);
+    }
+};
+
+auto on(cancellation_point token) {
     return segment{
-        type<void>{}, [_executor = std::forward<E>(executor)]<typename F, typename... Args>(
-                          F&& f, Args&&... args) mutable {
-            std::move(_executor)(
-                [_f = std::forward<F>(f),
+        stlab::type<cancellation_point>{},
+        [_token = std::move(token)]<typename F, typename... Args>(F&& f, Args&&... args) mutable {
+            immediate_executor(
+                [_token, _f = std::forward<F>(f),
                  _args = std::make_tuple(std::forward<Args>(args)...)]() mutable noexcept {
-                    std::apply(std::move(_f), std::move(_args));
+                    std::apply(
+                        [&_token, &_f]<typename... As>(As&&... as) mutable {
+                            std::move(_f)(_token, std::forward<As>(as)...);
+                        },
+                        std::move(_args));
                 });
-            // return std::monostate{};
         }};
 }
 

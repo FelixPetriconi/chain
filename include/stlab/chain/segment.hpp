@@ -69,12 +69,13 @@ public:
 
     template <class R, class... Args>
     auto invoke(R&& receiver, Args&&... args) && {
-        // TODO: must handle this cancel prior to invoking the segment.
-        // if (receiver.canceled()) return;
+        // Check cancellation before invoking the segment
+        if (receiver && receiver->canceled()) {
+            return;
+        }
         return std::move(_apply)(
             [_f = interpret(std::move(_functions)),
              _receiver = std::forward<R>(receiver)]<typename... T>(T&&... args) mutable noexcept {
-                if (_receiver->canceled()) return;
                 try {
                     std::move(_f)(std::forward<T>(args)...);
                 } catch (...) {

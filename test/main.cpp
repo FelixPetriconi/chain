@@ -7,13 +7,13 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #include <doctest/doctest.h>
 
-// #include <stlab/pre_exit.hpp>
+#include <stlab/pre_exit.hpp>
 
 auto main(int argc, char** argv) -> int {
     doctest::Context ctx;
     ctx.applyCommandLine(argc, argv);
     int res = ctx.run();
     if (ctx.shouldExit()) return res;
-    // stlab::pre_exit();
+    stlab::pre_exit();
     return res;
 }
